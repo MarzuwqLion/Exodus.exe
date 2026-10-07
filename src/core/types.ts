@@ -138,6 +138,8 @@ export interface MapNode {
   layoutVariant: number;
   /** Station identity is hidden until revealed. */
   revealed: boolean;
+  /** What a hidden Station looks like on the map until its beacon shows. */
+  decoy?: StopKind;
   /** Patrol presence known (from events or rumors). */
   patrolKnown: boolean;
   visited: boolean;

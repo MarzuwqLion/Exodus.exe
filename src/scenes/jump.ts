@@ -3,19 +3,13 @@
  * (seed, region, weather, players, heat, day, variant, skin, integrity, alert) without a run.
  */
 import { STOP_LAYOUTS } from '../content/layouts';
+import { REGION_WEATHER } from '../content/regions';
 import type { LaunchConfig } from '../core/config';
 import type { MemberId, Region, Slot, Weather } from '../core/types';
 import type { Game } from '../game';
 import { startingParty, startingResources } from '../run/party';
 import type { LayoutDef } from '../sim/layout';
 import type { StopConfig } from '../sim/stop';
-
-export const REGION_WEATHER: Record<Region, Weather[]> = {
-  newengland: ['snow', 'sleet', 'clearcold'],
-  corridor: ['rain', 'drizzle', 'smog'],
-  piedmont: ['fog', 'drizzle', 'clear'],
-  lowcountry: ['heavyrain', 'storm', 'humid'],
-};
 
 export const LAYOUTS: Record<string, readonly LayoutDef[]> = {
   depot: STOP_LAYOUTS.depot,

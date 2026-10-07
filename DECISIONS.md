@@ -71,3 +71,13 @@ One line per call: what was decided and why. Newest at the bottom of each sectio
 - Heave shoves vending machines, the only free-standing heavy fixture in the layouts.
 - June's run-level systems are pure functions for the camp and the events engine: Hunger per leg, Rations at camp (free at a Station), starving, leaving at 0 Health, Trust and the quiet goodbye below 20, Heat from logged kiosk sessions, and Stations shown two columns ahead.
 - Wanted posters: one small poster per android (a red header, hair or hat, skin, jacket, a line of print), pinned on the corkboard as unlit paper at Heat 2+. Gas stations got a corkboard in the store.
+
+## M5 — The run
+
+- The map: columns after a single node (Boston, the checkpoints) hold two towns, so every town stays reachable; the others hold 2–3. Roads never cross. Town names go column by column down the real route; the checkpoints are the Delaware River and Savannah River crossings; a keeper's town is theirs alone.
+- A hidden Station shows on the map as an ordinary stop type (a decoy) until its beacon is revealed.
+- Rumors attach to nodes. A Cells cache, Recycler activity, or sympathetic staff changes that node's stop; a patrol rumor shows patrol presence; a Station rumor reveals the Station. The diner TV adds rumors about the next two columns.
+- Each leg advances the day when the party sets out. Walking is decided by the car battery against the leg's cost. Road events roll only on driven legs, never on the leg into the Port.
+- Heat rules live with the run: +1 for an ALERT stop, +0.5 per knockout, +1 per two logged kiosk sessions, +1 per bust; −0.5 at the end of a leg with no ALERT, and another −0.5 at a Station.
+- Checkpoint tuning: "too fast" costs +25 (was 15), "too regular" breathing costs +30 (was 15), and the party AI breathes right 92% of the time (was 85%). With the spec's values, a solo robotic answerer was busted only 72% of the time, because the AI's human answers diluted the player's. Now the human answerer passes 90% solo and 100% two-player at Heat 0; the robotic one is busted 96% and 100%.
+- June vouches for the android with the lowest Integrity unless the players choose. The guard alternates between the androids question by question.

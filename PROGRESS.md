@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M5.1 Map generation, validation, reveal rules
+**Current task:** M5.11 Economy simulator, then the run scenes (M5.2–M5.8, M5.10)
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -64,7 +64,7 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## M5 — The run
 
-- [ ] M5.1 Map generation, validation, reveal rules
+- [x] M5.1 Map generation, validation, reveal rules
 - [ ] M5.2 Map scene rendering and the sailing clock
 - [ ] M5.3 Drive scene (all regions and weather, billboards, fast-forward, walking legs)
 - [ ] M5.4 Events engine and 24 road events
@@ -72,7 +72,7 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 - [ ] M5.6 Camp scene and management panel
 - [ ] M5.7 Lantern message system
 - [ ] M5.8 Checkpoints: queue, interrogation, breathing scan, bust
-- [ ] M5.9 Heat and enforcement escalation
+- [x] M5.9 Heat and enforcement escalation
 - [ ] M5.10 Save and continue (autosave at camp and Station)
 - [ ] M5.11 Exit: checkpoint bot bands and economy simulator bands pass
 

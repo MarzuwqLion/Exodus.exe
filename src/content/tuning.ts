@@ -400,7 +400,7 @@ export const TUNING = {
     bestMin: 1.5,
     bestMax: 4,
     tooSlow: 6,
-    tooFastPenalty: 15,
+    tooFastPenalty: 25,
     tooSlowPenalty: 10,
     robotic: 20,
     wrong: 25,
@@ -422,13 +422,13 @@ export const TUNING = {
     notchMs: 35,
     tooRegularStreak: 3,
     missPenalty: 12,
-    tooRegularPenalty: 15,
+    tooRegularPenalty: 30,
     chassisDriftPerSecond: 4,
     /** Below this Integrity, glitch beats make the ring stutter. */
     glitchBeatIntegrity: 40,
     /** Routine scans fail when the scan meter reaches this. */
     routineFailAt: 30,
-    aiBreathSuccess: 0.85,
+    aiBreathSuccess: 0.92,
   },
 
   port: {
