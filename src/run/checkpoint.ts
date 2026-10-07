@@ -106,6 +106,16 @@ export function applyScan(s: CheckpointState, meters: readonly number[]): void {
   s.suspicion = Math.max(0, Math.min(TUNING.checkpoint.bustAt, s.suspicion + total));
 }
 
+/**
+ * A checkpoint is stress (spec §12.6): in the queue every android watches a unit led off to the van
+ * (witnessing a reclamation), and then each one is scanned.
+ */
+export function checkpointStress(run: RunState): void {
+  const I = TUNING.integrity;
+  for (const a of activeAndroids(run.party))
+    a.integrity = Math.max(0, a.integrity + I.witnessReclamation + I.scanned);
+}
+
 export type CheckpointResult = 'pass' | 'papers' | 'bust';
 
 /** Under 70: pass. 70–99: Papers make it go away (or bust without them). 100: bust. */

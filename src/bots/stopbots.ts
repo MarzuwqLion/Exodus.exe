@@ -431,6 +431,20 @@ export class StopBot {
     };
     switch (task.kind) {
       case 'leave': {
+        // A checkpoint bust: someone has to raise the barrier from the control booth first.
+        const booth = sim.cfg.bust && !sim.gateOpen ? sim.layout.waypoints.get('booth') : undefined;
+        if (booth) {
+          const other = sim.members.find((o) => o !== m && o.controller !== null && sim.available(o));
+          const mine =
+            !other ||
+            Math.hypot(m.x - booth.x, m.y - booth.y) <= Math.hypot(other.x - booth.x, other.y - booth.y);
+          if (mine) {
+            if (!this.nav.go(sim, m, booth, it, { ...nav, tol: 0.5 })) return;
+            it.interact = m.mode === 'free';
+            it.interactHeld = true;
+            return;
+          }
+        }
         const exit = this.exitTile(sim, m);
         if (sim.inExit(m.x, m.y)) {
           // Hold Leave once the other player is at the car and the party AI is close behind (they walk over

@@ -1,9 +1,11 @@
 /** Headless bot runs of a stop (spec §17.2). */
 import type { MemberId, Region, Slot, Weather } from '../core/types';
 import { hashSeed } from '../core/rng';
+import { TUNING } from '../content/tuning';
 import { startingParty, startingResources } from '../run/party';
 import type { LayoutDef } from '../sim/layout';
 import { StopSim, type StopConfig } from '../sim/stop';
+import type { StopOutcome } from '../sim/types';
 import { BOT_LIMIT_SECONDS, StopBot, type StopBotKind } from './stopbots';
 
 export interface StopRunOpts {
@@ -33,13 +35,15 @@ export interface StopRunResult {
   lost: number;
   end: string;
   knockouts: number;
+  /** The stop's full outcome (null on a timeout), for the economy simulator. */
+  outcome: StopOutcome | null;
 }
 
 export function stopConfigFor(o: StopRunOpts): StopConfig {
   const control: Record<Slot, MemberId | null> = { 0: 'wren', 1: o.players === 2 ? 'brick' : null };
   const party = startingParty();
-  // Arriving after a drive: -5 Battery each (spec §12.4).
-  for (const m of party) if (m.kind === 'android') m.battery -= 5;
+  // Arriving after a drive: a leg's Battery from each android (spec §12.4).
+  for (const m of party) if (m.kind === 'android') m.battery -= TUNING.battery.perLeg;
   const cfg: StopConfig = {
     layout: o.layout,
     seed: hashSeed('bot', o.seed),
@@ -50,6 +54,9 @@ export function stopConfigFor(o: StopRunOpts): StopConfig {
     party,
     control,
     resources: startingResources(),
+    // The checkpoint compound only happens as a bust: ALERT from the start, the gate down.
+    bust: o.layout.kind === 'checkpoint',
+    startAlert: o.layout.kind === 'checkpoint',
   };
   o.patch?.(cfg);
   return cfg;
@@ -88,6 +95,7 @@ export function runStopBots(o: StopRunOpts): StopRunResult {
     lost: out?.lost.length ?? 0,
     end: out?.end ?? 'timeout',
     knockouts: sim.stats.knockouts,
+    outcome: out,
   };
 }
 

@@ -48,11 +48,8 @@ export const CHECKPOINT: LayoutDef = {
     g4: [20, 5],
   },
   routes: { patrol: ['g1', 'g2', 'g3', 'g4'] },
-  npcs: [
-    { role: 'guard', count: [2, 2], at: 'g1', route: 'patrol' },
-    { role: 'recycler', count: [1, 1], at: 'g3' },
-    { role: 'gunner', count: [1, 1], at: 'g2' },
-  ],
+  // The checkpoint guards are on site; the Recyclers come by van like any ALERT (§8.6).
+  npcs: [{ role: 'guard', count: [2, 2], at: 'g1', route: 'patrol' }],
   vanEntry: [36, 20],
   car: { x: 19, y: 8, facing: 'south' },
 };

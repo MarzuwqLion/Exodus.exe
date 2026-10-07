@@ -311,7 +311,7 @@ export const TUNING = {
   },
 
   battery: {
-    perLeg: 5,
+    perLeg: 10,
     walkPerLeg: 15,
     sprintPerSecond: 0.4,
     dash: 1.5,
@@ -349,7 +349,7 @@ export const TUNING = {
     checkpointColumns: [4, 8] as [number, number],
     stationColumns: [2, 3, 5, 6, 7, 9],
     stationsPerMap: 3,
-    legBattery: [8, 14] as [number, number],
+    legBattery: [12, 18] as [number, number],
     roadEventChance: 0.7,
     driveSeconds: [15, 25] as [number, number],
     longRestIntegrity: 15,
@@ -380,7 +380,7 @@ export const TUNING = {
     alert: 1,
     juneKioskUsesPerHeat: 2,
     knockout: 0.5,
-    decayPerLeg: 0.5,
+    decayPerLeg: 0.25,
     stationDecay: 0.5,
     checkpointPerLevel: 10,
     postersAt: 2,

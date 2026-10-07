@@ -373,7 +373,13 @@ export function startInteraction(sim: StopSim, m: MemberActor, it: Interaction):
       return;
     default:
       setMode(m, 'channel');
-      m.channel = { kind: channelKind(it.kind), target: it.target, t: 0, need: it.hold };
+      // Raising the barrier keeps its progress when someone gets knocked off the switch (spec §11.4).
+      m.channel = {
+        kind: channelKind(it.kind),
+        target: it.target,
+        t: it.kind === 'gate' ? sim.gateHoldT : 0,
+        need: it.hold,
+      };
       m.vx = m.vy = 0;
   }
 }
@@ -778,6 +784,7 @@ export function updateMode(sim: StopSim, m: MemberActor, dt: number, held: boole
         break;
       }
       ch.t += dt;
+      if (ch.kind === 'gate') sim.gateHoldT = ch.t;
       if (ch.t >= ch.need) {
         completeChannel(sim, m, ch);
         m.channel = null;
