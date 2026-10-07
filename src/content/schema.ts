@@ -174,6 +174,8 @@ export interface StationKeeper {
   /** e.g. "Delaware" */
   place: string;
   region: Region;
+  /** The map column whose Station this keeper runs (2, 3, 5, 6, 7, or 9). */
+  column: number;
   interior: StationInterior;
   /** 2–4 lines, spoken by 'keeper' (party members may answer). */
   lines: Line[];
