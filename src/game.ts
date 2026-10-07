@@ -18,6 +18,7 @@ import { emptyIntent } from './input/intents';
 import { InputManager } from './input/manager';
 import { CameraRig } from './render/camera';
 import { Pipeline } from './render/pipeline';
+import { setPortraitRenderer } from './render/portraits';
 import { C } from './render/palettes';
 import type { RunFlow } from './scenes/runflow';
 import type { GameScene } from './scenes/scene';
@@ -79,6 +80,7 @@ export class Game {
   ) {
     this.isQa = config.qa || config.bench;
     this.pipeline = new Pipeline(canvas, { preserveDrawingBuffer: this.isQa });
+    setPortraitRenderer(this.pipeline.renderer);
     this.ui = new UiSurface(this.pipeline.uiCanvas);
     this.debug = config.debug;
     this.store = this.isQa ? new MemoryStore() : safeLocalStorage();

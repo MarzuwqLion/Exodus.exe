@@ -11,6 +11,7 @@ import type { Slot } from '../core/types';
 import type { Glyph, GlyphDevice } from '../input/glyphs';
 import type { CameraRig } from '../render/camera';
 import { C } from '../render/palettes';
+import { portraitFor } from '../render/portraits';
 import { abilityReady, blendsFor, findInteraction } from '../sim/actions';
 import { BLEND_LABEL } from '../sim/blend';
 import { ringPhase, timeToBeat } from '../sim/breathing';
@@ -234,7 +235,14 @@ export class StopHud {
   }
 
   private face(ui: UiSurface, m: MemberActor, x: number, y: number, size: 'big' | 'small'): void {
-    // A tiny head portrait in the member's colors (hair, skin; slate face plate when exposed).
+    // The head portrait, rendered from the member's 3D head (spec §13.3), the chassis showing once the Skin is
+    // gone. Without a renderer (tests), a few pixels in the member's colors stand in.
+    const chassis = m.state.kind === 'android' && m.state.skin <= 5;
+    const pic = portraitFor(m.id, size === 'big' ? 9 : 7, chassis);
+    if (pic) {
+      ui.image(pic, x, y);
+      return;
+    }
     const s = size === 'big' ? 1 : 0;
     const look = MEMBERS[m.id];
     void look;

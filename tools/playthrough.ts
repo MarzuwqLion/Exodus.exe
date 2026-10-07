@@ -60,7 +60,7 @@ async function main(): Promise<void> {
               m.y = m.py = 4.5;
             });
           });
-        await page.evaluate(() => window.__exodus!.runTicks(ending === 'ghana' ? 60 : 60 * 380));
+        await page.evaluate((n) => window.__exodus!.runTicks(n), ending === 'ghana' ? 60 : 60 * 380);
       } else if (id === 'voyage' || id === 'ending' || id === 'gameover') {
         await page.evaluate(() => {
           const sc = window.__exodus!.game.scenes.current as unknown as { skipTalk?: () => void };
@@ -69,6 +69,14 @@ async function main(): Promise<void> {
         });
         await press('KeyE');
       } else {
+        // A player managing camp keeps the car and the androids charged (the skip doesn't spend Cells).
+        if (ending === 'ghana' && id === 'map')
+          await page.evaluate(() => {
+            const run = window.__exodus!.game.flow?.run;
+            if (!run) return;
+            run.resources.carBattery = 100;
+            for (const m of run.party) if (m.kind === 'android') m.battery = Math.max(m.battery, 60);
+          });
         // Every in-run scene: the debug skip moves it along the way finishing it would.
         if (ending === 'lost' && id !== 'map' && id !== 'drive' && id !== 'camp' && id !== 'intro')
           await page.evaluate(() => {
