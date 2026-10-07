@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import type { Region, Weather } from '../core/types';
 import { Rng, hashSeed } from '../core/rng';
 import { Kit, type LightSpec } from '../models/kit';
-import { buildProp, container, CONTAINER_SIZE } from '../models/props';
+import { buildProp, container, CONTAINER_SIZE, type PropId } from '../models/props';
 import { F } from '../sim/grid';
 import type { ParsedLayout } from '../sim/layout';
 import { materials } from './materials';
@@ -184,6 +184,76 @@ function buildWalls(ctx: Ctx): void {
   }
 }
 
+/**
+ * The modeled prop for a furniture glyph (the art pass, spec §5.3), by the kind of stop it's in. Props face +z;
+ * `facing` turns them toward their open side. Null keeps the glyph's simple box.
+ */
+function propFor(L: ParsedLayout, c: string, x: number, y: number): PropId | null {
+  const kind = L.def.kind;
+  const house = isHouse(kind);
+  const staff = L.grid.has(x, y, F.STAFF);
+  switch (c) {
+    case 'S':
+      return house ? 'bookshelf' : 'shelf';
+    case 'R':
+      return 'register';
+    case 'C':
+      return house ? 'kitchenCounter' : 'counter';
+    case 'L':
+      return 'lockers';
+    case 'T':
+      return kind === 'diner' ? 'dinerTable' : house ? 'kitchenTable' : null;
+    case 'b':
+      return 'boothSeat';
+    case 'c':
+      return kind === 'diner' ? 'stool' : 'chair';
+    case 'O':
+      return 'bench';
+    case 'B':
+      return 'chargingBay';
+    case 'E':
+      return 'evCharger';
+    case 'K':
+      return 'idKiosk';
+    case 'k':
+      return house ? 'sinkCounter' : 'grill';
+    case 's':
+      return 'stove';
+    case 'F':
+      return 'fridge';
+    case 'J':
+      return 'partsBin';
+    case 'N':
+      return house ? 'officeDesk' : staff || kind === 'gas' || kind === 'depot' ? 'mechanicBench' : null;
+    case 'g':
+      return 'gasPump';
+    case 'y':
+      return kind === 'port' ? 'pallet' : 'boxes';
+    case '$':
+      return 'boothConsole';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Which way a piece of furniture faces: toward a table it belongs to (booths, chairs), else toward open floor,
+ * preferring the camera's side. Returns the rotation about y for a prop modeled facing +z.
+ */
+function facing(L: ParsedLayout, c: string, x: number, y: number): number {
+  const dirs: [number, number, number][] = [
+    [0, 1, 0],
+    [1, 0, Math.PI / 2],
+    [-1, 0, -Math.PI / 2],
+    [0, -1, Math.PI],
+  ];
+  if (c === 'b' || c === 'c') {
+    for (const [dx, dy, ry] of dirs) if (ch(L, x + dx, y + dy) === 'T') return ry;
+  }
+  for (const [dx, dy, ry] of dirs) if (L.grid.walkable(x + dx, y + dy)) return ry;
+  return 0;
+}
+
 /** Furniture and fixtures per glyph. */
 function buildFurniture(ctx: Ctx): void {
   const { k, L, rng } = ctx;
@@ -193,6 +263,17 @@ function buildFurniture(ctx: Ctx): void {
       const c = ch(L, x, y);
       const cx = x + 0.5;
       const cz = y + 0.5;
+      const prop = propFor(L, c, x, y);
+      // Multi-tile pieces (a workbench) take one prop per pair of tiles.
+      if (prop === 'mechanicBench' && ch(L, x - 1, y) === c && (x - firstOfRun(L, c, x, y)) % 2 === 1)
+        continue;
+      if (prop) {
+        const wide = prop === 'mechanicBench' && ch(L, x + 1, y) === c;
+        k.at({ x: wide ? x + 1 : cx, z: cz, ry: facing(L, c, x, y) }, () =>
+          buildProp(k, prop, (x * 7 + y * 3) % 4),
+        );
+        continue;
+      }
       switch (c) {
         case 'S': {
           // Shelf with goods in muted blocks.
@@ -479,6 +560,22 @@ function buildPortSurroundings(ctx: Ctx): void {
   }
 }
 
+/** The x where a horizontal run of glyph `c` through (x, y) starts. */
+function firstOfRun(L: ParsedLayout, c: string, x: number, y: number): number {
+  let x0 = x;
+  while (ch(L, x0 - 1, y) === c) x0--;
+  return x0;
+}
+
+/** Security cameras on their walls (the sim's cameras sweep; the housing points down its centre line). */
+function buildCameras(ctx: Ctx): void {
+  const { k, L } = ctx;
+  for (const cam of L.def.cameras ?? []) {
+    const ry = Math.PI / 2 - (cam.facing * Math.PI) / 180;
+    k.at({ x: cam.x + 0.5, y: 0, z: cam.y + 0.5, ry }, () => buildProp(k, 'securityCamera'));
+  }
+}
+
 function tree(k: Kit, x: number, z: number, kind: 'pine' | 'palm' | 'bare', rng: Rng): void {
   const s = 0.8 + rng.next() * 0.5;
   if (kind === 'pine') {
@@ -533,6 +630,14 @@ function buildLights(ctx: Ctx): void {
     for (let x = 3; x < G.w; x += 10) {
       const tx = x + ((y * 3) % 4);
       if (!G.has(tx, y, F.OUTDOOR) || !G.walkable(tx, y)) continue;
+      // Only at the lot's edges (next to a wall, fence, or the map's edge), never in the middle of a path.
+      const edge = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ].some(([dx, dy]) => !G.inBounds(tx + dx, y + dy) || G.has(tx + dx, y + dy, F.OPAQUE));
+      if (!edge) continue;
       // Keep lamps off paths players use a lot: only on the lot edges or between bays.
       streetlamp(ctx, tx + 0.5, y + 0.5);
     }
@@ -634,6 +739,7 @@ export function buildLevel(L: ParsedLayout, region: Region, weather: Weather, se
   buildFloors(ctx);
   buildWalls(ctx);
   buildFurniture(ctx);
+  buildCameras(ctx);
   const cutaways: Cutaway[] = [];
   if (L.def.kind === 'port') {
     buildPortContainers(ctx, cutaways);
@@ -655,9 +761,7 @@ export function buildLevel(L: ParsedLayout, region: Region, weather: Weather, se
 /** A vending machine (dynamic: Brick can shove it). */
 export function vendingMesh(): THREE.Group {
   const k = new Kit();
-  k.box(0.9, 1.9, 0.75, C.slate1, undefined, { top: C.night3 });
-  k.glow(() => k.box(0.7, 1.2, 0.04, C.amber1, { y: 0.5, z: 0.38 }));
-  k.box(0.6, 0.18, 0.05, C.night1, { y: 0.15, z: 0.39 });
+  buildProp(k, 'vendingMachine');
   const out = k.build();
   const g = new THREE.Group();
   const m = materials();

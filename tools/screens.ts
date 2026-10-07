@@ -183,7 +183,10 @@ async function main(): Promise<void> {
         if (shot.eval) await page.evaluate(shot.eval);
         if (shot.ticks) {
           await page.evaluate((k) => window.__exodus?.runTicks(k), shot.ticks);
-          await page.evaluate(() => window.__exodus?.renderNow());
+          // Let the camera catch up (ticks run without frames).
+          await page.evaluate(() => {
+            for (let i = 0; i < 90; i++) window.__exodus?.renderNow();
+          });
         }
         await page.screenshot({ path: `${dir}/${shot.name}.png` });
         await saveDataUrl(

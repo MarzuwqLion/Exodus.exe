@@ -27,7 +27,10 @@ async function main(): Promise<void> {
     if (ticksArg) {
       const n = Number(ticksArg.split('=')[1]);
       await page.evaluate((k) => window.__exodus?.runTicks(k), n);
-      await page.evaluate(() => window.__exodus?.renderNow());
+      // Let the camera catch up (ticks run without frames).
+      await page.evaluate(() => {
+        for (let i = 0; i < 90; i++) window.__exodus?.renderNow();
+      });
     }
     await page.screenshot({ path: out + '.png' });
     await saveDataUrl(await page.evaluate(() => window.__exodus!.lowResPng()), out + '_low.png');
