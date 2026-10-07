@@ -194,6 +194,8 @@ export class StopView {
   private time = 0;
   /** Show observer cones (Vesper's sense, or the debug overlay). */
   showCones: 'none' | 'vesper' | 'all' = 'none';
+  /** Ground height under an actor (the Port's gangway climbs to the deck). */
+  heightAt: ((x: number, z: number) => number) | null = null;
   private list: CharInstance[] = [];
 
   constructor(
@@ -339,7 +341,7 @@ export class StopView {
     const inst = a.inst;
     inst.x = m.px + (m.x - m.px) * alpha;
     inst.z = m.py + (m.y - m.py) * alpha;
-    inst.y = 0;
+    inst.y = this.heightAt ? this.heightAt(inst.x, inst.z) : 0;
     inst.skin01 = this.sim.skin01(m);
     inst.seamFlicker = m.mode === 'shutdown';
     inst.flash = m.hitFlash > 0.06;
@@ -349,7 +351,7 @@ export class StopView {
       inst.slice = Math.sin(this.time * 97) > 0 ? 0.12 : -0.08;
       inst.x += Math.sin(this.time * 131) * 0.03;
     } else inst.slice = 0;
-    if (m.mode === 'carried') inst.y = 0.15;
+    if (m.mode === 'carried') inst.y += 0.15;
     this.face(a, m.dir, m.headSnapT > 0 ? m.facing : null);
     this.pose(a, m.activity, m.activityT, m.gait, m.speed01, m.idx * 0.37, step, m.mode === 'glitch');
   }
@@ -358,7 +360,7 @@ export class StopView {
     const inst = a.inst;
     inst.x = n.px + (n.x - n.px) * alpha;
     inst.z = n.py + (n.y - n.py) * alpha;
-    inst.y = 0;
+    inst.y = this.heightAt ? this.heightAt(inst.x, inst.z) : 0;
     inst.flash = n.hitFlash > 0.06;
     let dir = n.dir;
     if (n.mode !== 'ko' && Math.hypot(n.vx, n.vy) < 0.15) {

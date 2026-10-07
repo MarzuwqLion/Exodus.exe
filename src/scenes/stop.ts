@@ -36,6 +36,8 @@ export interface StopParams {
   onTick?: (scene: StopScene, dt: number) => void;
   /** Extra HUD drawing (tutorial prompts, Lantern texts). */
   onDrawUi?: (scene: StopScene, ui: UiSurface) => void;
+  /** Per rendered frame, after the view updates (the Port's moving cover). */
+  onFrame?: (scene: StopScene, dt: number) => void;
 }
 
 /** A panel over the stop (a conversation, the Station panel): the stop waits while it is open. */
@@ -83,6 +85,10 @@ export function regionFog(
   return { color, density };
 }
 
+/** How far behind a cutaway piece someone stands before it drops, and how low it drops. */
+const CUTAWAY_REACH = 4.2;
+const CUTAWAY_SCALE = 0.22;
+
 export class StopScene implements GameScene {
   readonly id: string;
   readonly sim: StopSim;
@@ -91,7 +97,7 @@ export class StopScene implements GameScene {
   readonly view: StopView;
   readonly hud: StopHud;
   private level: LevelBuild;
-  private lights: LightPool;
+  readonly lights: LightPool;
   private particles = new Particles();
   private sparks = new Sparks();
   private hitPause = 0;
@@ -422,6 +428,7 @@ export class StopScene implements GameScene {
     const sim = this.sim;
     this.view.showCones = this.game.debug ? 'all' : 'vesper';
     this.view.update(alpha, dt);
+    this.params.onFrame?.(this, dt);
     if (!this.freeze) this.frameCamera(dt > 0 ? dt : 1 / 60);
     else this.rig.apply();
     // Lights: ALERT flicker; beacons only show when an android is within 12 m (spec §4.5).
@@ -432,11 +439,30 @@ export class StopScene implements GameScene {
     for (const b of this.beaconEmitters)
       b.gain = androidNear(b.x, b.z) ? 0.6 + Math.sin(this.time * 2) * 0.4 : 0;
     this.lights.update(this.rig.focus.x, this.rig.focus.z, this.time);
+    this.updateCutaways(dt);
     this.particles.update(dt, this.rig.camera, this.rig.focus.x, this.rig.focus.z, this.rig.zoom);
     this.sparks.update(dt);
     this.hud.update(dt);
     if (this.flashT > 0) this.flashT -= rawDt;
     this.updateAudio(dt);
+  }
+
+  /** Pieces drop low while anyone stands just behind them (north, away from the camera). */
+  private updateCutaways(dt: number): void {
+    const cuts = this.level.cutaways;
+    if (cuts.length === 0) return;
+    const sim = this.sim;
+    const behind = (c: (typeof cuts)[number], x: number, y: number): boolean =>
+      x > c.x0 - 0.6 && x < c.x1 + 0.6 && y < c.zNorth + 0.2 && y > c.zNorth - CUTAWAY_REACH;
+    for (const c of cuts) {
+      let cut = false;
+      for (const m of sim.members)
+        if (sim.present(m) && m.mode !== 'carried' && behind(c, m.x, m.y)) cut = true;
+      if (!cut) for (const n of sim.npcs) if (n.mode !== 'gone' && behind(c, n.x, n.y)) cut = true;
+      const want = cut ? CUTAWAY_SCALE : 1;
+      const s = c.group.scale.y;
+      c.group.scale.y = dt <= 0 ? want : s + (want - s) * Math.min(1, dt * 8);
+    }
   }
 
   private updateAudio(dt: number): void {

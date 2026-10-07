@@ -196,10 +196,11 @@ export const EPILOGUE = paletteData(EPILOGUE_PALETTE);
 /**
  * Reserved colors (spec §4.5 color rules). Lookups never map ordinary scene colors to these: a color only
  * lands on alarm red or scanner cyan if it is already close to that hue and nearly as saturated as the
- * reserved color itself (so red and cyan stay meaningful).
+ * reserved color itself (so red and cyan stay meaningful). Amber light on rust paint lands about 23° from
+ * alarm red in OKLab hue; the gate (about 18°) keeps it on the rust and amber ramps.
  */
 const RESERVED_CHROMA_FRACTION = 0.6;
-const RESERVED_HUE_COS = 0.85;
+const RESERVED_HUE_COS = 0.95;
 
 function isReservedIndex(p: PaletteData, i: number): 'red' | 'cyan' | null {
   const n = rgbToInt(...p.rgb[i]);

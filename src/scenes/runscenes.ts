@@ -1,19 +1,14 @@
 /**
  * Run scene factories: stops, Stations, compromised Stations, and checkpoint busts inside a run (their
- * outcomes go back to the run flow), and the Port.
+ * outcomes go back to the run flow). The Port is in port.ts.
  */
-import { REGION_NAMES } from '../content/regions';
-import { TUNING } from '../content/tuning';
 import type { Game } from '../game';
-import { C } from '../render/palettes';
 import { activeJune, juneLeavesAtStation } from '../run/june';
 import { addRumor, currentNode, upcoming } from '../run/map';
-import { activeAndroids } from '../run/party';
 import { withRng } from '../run/run';
 import { keeperForColumn } from '../run/station';
-import type { UiSurface } from '../ui/surface';
-import type { RunEnding, RunFlow } from './runflow';
-import type { GameScene, WorldView } from './scene';
+import type { RunFlow } from './runflow';
+import type { GameScene } from './scene';
 import { compromisedScene, stationScene } from './station';
 import { StopScene } from './stop';
 import { TYPE_NAMES } from './map';
@@ -65,61 +60,6 @@ export function runStationScene(game: Game, flow: RunFlow): GameScene {
         run.stats.juneFate = 'went-home';
     },
   });
-}
-
-/**
- * The Port (spec §11.5) until its scene lands in M6: the dawn crossing resolves from the run's state the way
- * the economy simulator models it (Papers at the gate, Mensah's part, Heat).
- */
-export class PortPlaceholder implements GameScene {
-  readonly id = 'port';
-  private t = 0;
-  private result: RunEnding | null = null;
-
-  constructor(
-    private readonly game: Game,
-    private readonly flow: RunFlow,
-  ) {}
-
-  enter(): void {
-    this.game.audio.setMusic('scene');
-  }
-
-  exit(): void {}
-
-  allowJoin(): boolean {
-    return false;
-  }
-
-  pausable(): boolean {
-    return false;
-  }
-
-  tick(dt: number): void {
-    this.t += dt;
-    if (this.t > 3 && !this.result) {
-      const run = this.flow.run;
-      const n = activeAndroids(run.party).length;
-      const papers = Math.min(run.resources.papers, n);
-      const mensah = run.flags.includes('mensah-part') && run.resources.parts >= TUNING.port.mensahParts;
-      const p = 0.5 + 0.1 * papers + (mensah ? 0.08 : 0) - 0.12 * run.heat;
-      this.result = withRng(run, (rng) => rng.chance(Math.max(0.05, Math.min(0.95, p))))
-        ? 'ghana'
-        : 'sailed-without';
-      this.flow.end(this.result);
-    }
-  }
-
-  frame(): void {}
-
-  world(): WorldView | null {
-    return null;
-  }
-
-  drawUi(ui: UiSurface): void {
-    ui.text('The Port of Miami, before dawn.', ui.width / 2, ui.height / 2 - 10, C.fog1, { align: 'center' });
-    ui.text(REGION_NAMES.lowcountry, ui.width / 2, ui.height / 2 + 6, C.slate1, { align: 'center' });
-  }
 }
 
 export { TYPE_NAMES };

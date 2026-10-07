@@ -368,7 +368,8 @@ export function yardTruck(k: Kit, variant = 0): void {
     k.box(0.2, 0.14, 0.04, C.amber0, { x: 0.95, y: 1.0, z: -4.42 });
   });
   for (const x of [-0.9, 0.9]) k.box(0.5, 0.5, 0.05, C.night1, { x, y: 0.3, z: -4.47 });
-  if (v === 2) k.at(YARD_TRUCK_DECK, () => container(k, 0));
+  // The container rides lengthwise on the chassis.
+  if (v === 2) k.at({ ...YARD_TRUCK_DECK, ry: Math.PI / 2 }, () => container(k, 0));
 }
 
 // ------------------------------------------------------------------------------------------------

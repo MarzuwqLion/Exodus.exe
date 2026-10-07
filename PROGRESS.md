@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M6.1 The Port (simulation and bots done; scene next)
+**Current task:** M6.6 Exit: a scripted full run reaches Ghana headless; the economy simulator on the real Port
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -78,11 +78,11 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## M6 — The finale
 
-- [ ] M6.1 The Port: dawn clock, container yard, terminal gate, berth and gangway timer
-- [ ] M6.2 The voyage with the palette crossfade
-- [ ] M6.3 Ghana ending, epilogue lines, stats screen
-- [ ] M6.4 Both game overs
-- [ ] M6.5 Memory cores and unlocks
+- [x] M6.1 The Port: dawn clock, container yard, terminal gate, berth and gangway timer
+- [x] M6.2 The voyage with the palette crossfade
+- [x] M6.3 Ghana ending, epilogue lines, stats screen
+- [x] M6.4 Both game overs
+- [x] M6.5 Memory cores and unlocks
 - [ ] M6.6 Exit: Port bot band passes; a scripted full run reaches Ghana headless
 
 ## M7 — Presentation and polish

@@ -12,7 +12,8 @@ import { GameOverScene, type GameOverKind } from './gameover';
 import { ensurePlayers, jumpStopConfig } from './jump';
 import { MapScene } from './map';
 import { RunFlow } from './runflow';
-import { PortPlaceholder, runStationScene, runStopScene } from './runscenes';
+import { portScene } from './port';
+import { runStationScene, runStopScene } from './runscenes';
 import { compromisedScene, keeperForInterior, stationScene } from './station';
 import { StopScene } from './stop';
 import { StreetScene } from './street';
@@ -88,7 +89,15 @@ function registerRunScenes(game: Game): void {
     runStopScene(g, flowOf(g), { compromised: !!p?.compromised, bust: !!p?.bust }),
   );
   game.register('runstation', (g) => runStationScene(g, flowOf(g)));
-  game.register('port', (g) => new PortPlaceholder(g, flowOf(g)));
+  game.register('port', (g) => {
+    const flow = flowOf(g);
+    // QA jump: straight to the last leg.
+    if (g.config.scene === 'port' && currentNode(flow.run.map).type !== 'port') {
+      jumpTo(flow, 10);
+      flow.run.day = 11;
+    }
+    return portScene(g, flow);
+  });
   registerFinaleScenes(game);
 }
 

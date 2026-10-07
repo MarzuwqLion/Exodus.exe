@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import type { Region, Weather } from '../core/types';
 import { Rng, hashSeed } from '../core/rng';
 import { Kit, type LightSpec } from '../models/kit';
+import { buildProp, container, CONTAINER_SIZE } from '../models/props';
 import { F } from '../sim/grid';
 import type { ParsedLayout } from '../sim/layout';
 import { materials } from './materials';
@@ -19,6 +20,19 @@ export interface LevelBuild {
   /** Lamp heads for insects (humid Florida nights). */
   lampHeads: { x: number; y: number; z: number }[];
   triangles: number;
+  /**
+   * Pieces that drop low while someone stands just behind them, so nobody is hidden from the camera (the
+   * Port's container stacks; the cutaway rule walls follow statically).
+   */
+  cutaways: Cutaway[];
+}
+
+export interface Cutaway {
+  group: THREE.Group;
+  x0: number;
+  x1: number;
+  /** The north face: whoever stands up to a few meters north of it is behind it. */
+  zNorth: number;
 }
 
 const WALL_H = 3.1;
@@ -85,9 +99,10 @@ function buildFloors(ctx: Ctx): void {
   const G = L.grid;
   for (let y = 0; y < G.h; y++) {
     for (let x = 0; x < G.w; x++) {
-      const c = ch(L, x, y);
-      if (c === ' ') continue;
-      if (c === '#') continue;
+      let c = ch(L, x, y);
+      if (c === ' ' || c === '#' || c === 'v') continue;
+      // Under the gangway: the quay, or the strip of water between the quay and the hull.
+      if (c === '=') c = ch(L, x - 1, y) === '~' ? '~' : ',';
       const col = floorColor(ctx, c, x, y);
       const fy = c === '~' ? -0.25 : 0;
       k.ground(x, y, x + 1, y + 1, fy, col);
@@ -273,7 +288,12 @@ function buildFurniture(ctx: Ctx): void {
           k.box(0.55, 1.6, 0.4, C.concrete1, { x: cx, z: cz }, { top: C.slate0 });
           k.glow(() => k.box(0.32, 0.2, 0.04, C.amber1, { x: cx, y: 1.2, z: cz + 0.21 }));
           break;
+        case '&':
+          if (L.def.kind === 'port') chainLink(ctx, x, y);
+          else barrier(ctx, x, y);
+          break;
         case 'Y': {
+          if (L.def.kind === 'port') break;
           const h = 2.6 * (1 + ((x * 31 + y * 17) % 2));
           const cols = [C.rust1, C.slate1, C.moss1, C.concrete1, C.amber0];
           k.box(
@@ -322,6 +342,140 @@ function buildFurniture(ctx: Ctx): void {
           break;
       }
     }
+  }
+}
+
+/** Which way a run of fence or barrier tiles goes at (x, y). */
+function runsAlongX(L: ParsedLayout, x: number, y: number): boolean {
+  const solid = (c: string): boolean => c === '&' || c === '!' || c === 'G' || c === '#';
+  return (
+    solid(ch(L, x - 1, y)) || solid(ch(L, x + 1, y)) || !(solid(ch(L, x, y - 1)) || solid(ch(L, x, y + 1)))
+  );
+}
+
+/** Chain-link fence, 2.4 m: a post per meter, top and bottom rails, and crossed wire you can see through. */
+function chainLink(ctx: Ctx, x: number, y: number): void {
+  const { k, L } = ctx;
+  const along = runsAlongX(L, x, y);
+  const H = 2.4;
+  const ry = along ? 0 : Math.PI / 2;
+  k.at({ x: x + 0.5, z: y + 0.5, ry }, () => {
+    k.box(0.07, H, 0.07, C.slate1, { x: -0.5 });
+    k.box(1.0, 0.05, 0.05, C.slate1, { y: H - 0.05 });
+    k.box(1.0, 0.04, 0.04, C.slate0, { y: 0.12 });
+    for (const s of [-1, 1])
+      k.box(1.38, 0.025, 0.025, C.slate0, { y: H / 2, rz: s * Math.atan2(H - 0.3, 1.0) });
+    // Barbed wire along the top.
+    k.box(1.0, 0.03, 0.03, C.night3, { y: H + 0.18 });
+  });
+}
+
+/** A road barrier (the checkpoint): a striped arm on short posts. */
+function barrier(ctx: Ctx, x: number, y: number): void {
+  const { k, L } = ctx;
+  const along = runsAlongX(L, x, y);
+  k.at({ x: x + 0.5, z: y + 0.5, ry: along ? 0 : Math.PI / 2 }, () => {
+    k.box(0.12, 1.0, 0.12, C.slate1, { x: -0.45 }, { top: C.slate0 });
+    k.box(1.0, 0.14, 0.1, (x + y) % 2 === 0 ? C.amber1 : C.fog1, { y: 0.9 });
+  });
+}
+
+/**
+ * The Port's container stacks: each 2-deep strip of 'Y' tiles is filled with real containers along its run,
+ * slightly out of line.
+ */
+function buildPortContainers(ctx: Ctx, cutaways: Cutaway[]): void {
+  const { L, rng } = ctx;
+  const G = L.grid;
+  for (let y = 0; y < G.h - 1; y++) {
+    for (let x = 0; x < G.w; x++) {
+      const top = ch(L, x, y) === 'Y' && ch(L, x, y + 1) === 'Y' && ch(L, x, y - 1) !== 'Y';
+      if (!top || ch(L, x - 1, y) === 'Y') continue;
+      let len = 0;
+      while (ch(L, x + len, y) === 'Y' && ch(L, x + len, y + 1) === 'Y') len++;
+      const n = Math.max(1, Math.round(len / 6.5));
+      const seg = len / n;
+      // Each strip is its own piece so it can drop low when someone stands behind it.
+      const k = new Kit();
+      // Stacks are one or two high; whoever stands behind one is shown by the cutaway.
+      for (let i = 0; i < n; i++) {
+        const cx = x + seg * (i + 0.5);
+        const high = 1 + rng.int(0, 1);
+        for (let h = 0; h < high; h++) {
+          const s = Math.min(1, (seg - 0.2) / CONTAINER_SIZE.len);
+          k.at(
+            {
+              x: cx + rng.range(-0.12, 0.12),
+              y: h * CONTAINER_SIZE.h,
+              z: y + 1 + rng.range(-0.08, 0.08),
+              sx: s,
+            },
+            () => container(k, rng.int(0, 30)),
+          );
+        }
+      }
+      const out = k.build();
+      const group = new THREE.Group();
+      if (out.solid) group.add(new THREE.Mesh(out.solid, materials().toon));
+      cutaways.push({ group, x0: x, x1: x + len, zNorth: y });
+    }
+  }
+}
+
+/** The Port's lights: floodlights on the terminal fence's posts and over the yard's truck lanes. */
+function buildPortLights(ctx: Ctx): void {
+  const { k, L } = ctx;
+  const G = L.grid;
+  for (let x = 8; x < G.w; x += 12) {
+    for (let y = 0; y < G.h; y++) {
+      if (ch(L, x, y) !== '&' || !runsAlongX(L, x, y)) continue;
+      k.at({ x: x + 0.5, z: y + 0.5 }, () => {
+        k.box(0.12, 6, 0.12, C.slate0);
+        k.box(0.5, 0.3, 0.4, C.night3, { y: 6 });
+        k.glow(() => k.box(0.42, 0.06, 0.32, C.fog2, { y: 5.97 }));
+      });
+      k.light({ x: x + 0.5, y: 5.6, z: y + 1.2, color: C.fog2, intensity: 4, range: 11 });
+      ctx.lampHeads.push({ x: x + 0.5, y: 5.9, z: y + 0.5 });
+    }
+  }
+}
+
+/** Around the Port: the harbor north and west, the city behind the lot, the terminal sheds to the east. */
+function buildPortSurroundings(ctx: Ctx): void {
+  const { k, L, rng } = ctx;
+  const G = L.grid;
+  const pad = 40;
+  // The harbor: north of the quay and west of the yard (the grid's own water tiles sit at -0.25 too).
+  k.ground(-pad, -pad - 30, G.w + pad, 0, -0.25, C.night1);
+  k.ground(-pad, 0, 0, G.h + pad, -0.25, C.night1);
+  // The quay's lip along the water.
+  k.box(G.w, 0.3, 0.3, C.concrete0, { x: G.w / 2, y: -0.25, z: 6.15 }, { top: C.concrete1 });
+  k.box(0.3, 0.3, G.h - 25, C.concrete0, { x: 2.85, y: -0.25, z: 25 + (G.h - 25) / 2 }, { top: C.concrete1 });
+  // Mooring bollards along the quay, clear of the gangway.
+  for (let x = 4; x < G.w - 2; x += 8) {
+    if (Math.abs(x - 44.5) < 4) continue;
+    k.at({ x, z: 6.55 }, () => buildProp(k, 'bollardMooring', x % 16 === 4 ? 1 : 0));
+  }
+  // East: the terminal's sheds, a lit door where the Recyclers come out.
+  k.ground(G.w, 0, G.w + pad, G.h + pad, -0.01, C.night2);
+  k.box(10, 7, 16, C.slate0, { x: G.w + 6, z: 21 }, { top: C.night1 });
+  k.glow(() => k.box(0.05, 2.4, 2.2, C.fog1, { x: G.w + 0.98, y: 0, z: 22.5 }));
+  k.light({ x: G.w + 0.2, y: 2.4, z: 22.5, color: C.fog2, intensity: 2.5, range: 7 });
+  for (let z = 32; z < G.h; z += 9)
+    k.box(8, 5 + rng.next() * 3, 7, C.night3, { x: G.w + 6, z }, { top: C.night1 });
+  // South: the road past the lot and the dark city beyond it.
+  k.ground(0, G.h, G.w, G.h + pad, -0.01, C.night2);
+  for (let x = -6; x < G.w + 10; x += 4) k.box(2, 0.01, 0.14, C.amber0, { x: x + 1, y: 0.004, z: G.h + 4 });
+  for (let x = 0; x < G.w; x += 10) {
+    const h = 6 + rng.next() * 8;
+    k.box(8, h, 7, rng.chance(0.5) ? C.night3 : C.slate0, { x: x + 4, z: G.h + 12 }, { top: C.night1 });
+  }
+  // Puddles on the apron and in the lanes (it's storming).
+  for (let i = 0; i < 26; i++) {
+    const x = rng.next() * G.w;
+    const y = 6 + rng.next() * (G.h - 6);
+    if (!G.walkable(Math.floor(x), Math.floor(y))) continue;
+    k.box(1 + rng.next() * 1.5, 0.008, 0.6 + rng.next(), C.slate0, { x, y: 0.004, z: y });
   }
 }
 
@@ -480,14 +634,22 @@ export function buildLevel(L: ParsedLayout, region: Region, weather: Weather, se
   buildFloors(ctx);
   buildWalls(ctx);
   buildFurniture(ctx);
-  buildLights(ctx);
-  buildSurroundings(ctx);
+  const cutaways: Cutaway[] = [];
+  if (L.def.kind === 'port') {
+    buildPortContainers(ctx, cutaways);
+    buildPortLights(ctx);
+    buildPortSurroundings(ctx);
+  } else {
+    buildLights(ctx);
+    buildSurroundings(ctx);
+  }
   const out = k.build();
   const group = new THREE.Group();
   const m = materials();
   if (out.solid) group.add(new THREE.Mesh(out.solid, m.toon));
   if (out.glow) group.add(new THREE.Mesh(out.glow, m.glow));
-  return { group, lights: out.lights, lampHeads: ctx.lampHeads, triangles: k.triangles };
+  for (const c of cutaways) group.add(c.group);
+  return { group, lights: out.lights, lampHeads: ctx.lampHeads, triangles: k.triangles, cutaways };
 }
 
 /** A vending machine (dynamic: Brick can shove it). */
