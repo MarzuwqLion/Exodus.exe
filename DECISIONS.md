@@ -24,4 +24,4 @@ One line per call: what was decided and why. Newest at the bottom of each sectio
 - Solo player 1 reads every device player 2 doesn't own (their last-used device drives glyphs and rumble). Player 2 joins with Start on another pad or Backspace (arrow-key layout). If player 1 drops while player 2 is in, player 2 becomes player 1.
 - Lowercase descenders use one row below the 5×7 cell (an 8-row glyph cell, 10 px line height) for legibility.
 - Car taillights use dim amber, never red (red is reserved).
-- A QA-only scene () holds the M1 test block for palette and shimmer tests.
+- A QA-only scene (`?scene=street`) holds the M1 test block for palette and shimmer tests.

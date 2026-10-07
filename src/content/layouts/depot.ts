@@ -1,0 +1,141 @@
+/**
+ * Charging Depot layouts (spec §10.2): a lot with charging bays, a cyan ID kiosk, an attached convenience store
+ * (shelves, register, back office with parts lockers), staff restroom, and a security booth. One character per
+ * 1 m tile; north is up. See src/sim/layout.ts for the legend.
+ */
+import type { LayoutDef } from '../../sim/layout';
+
+/** Depot A: the store along the north side, bays across the lot, the car at the southwest corner. */
+export const DEPOT_A: LayoutDef = {
+  id: 'depot-a',
+  kind: 'depot',
+  variant: 0,
+  name: 'Charging depot',
+  grid: [
+    '########################################',
+    '#zLLLzzzTz#.SSS.SSS.SSS...V.V#,,,,,,,,J#',
+    '#zzzzzzzzz#..................#,,,,,,,,N#',
+    '#zzzzzzzzz#.SSS.SSS.SSS......#,,,,,,,,N#',
+    '#zzzzzzzzz#..................#,,,,,,,,,#',
+    '##d####d###zzzzR.............#,,,,,,,,,#',
+    '#zzz#zzzzzdzzzzR.............D,,,,,,,,,#',
+    '#zzz#zzzzz#zzzzR.............#,,,,,,,,,#',
+    '###########WWWWWWWWWDWWWWWWWW#,,,,,,,,,#',
+    ',,,,,,,,,,,__________________,,,,,,,,,,#',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,G,,,,#',
+    ',,,,,,,P,,,,,P,,,,,P,,,,,P,,,,,,,,,,,,,#',
+    ',,,,,,,B,,,,,B,,,,,B,,,,,B,,,,,K,,,,,,,#',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#',
+    'XXXXX,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#',
+    'XXXXX,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#',
+    'XXXXX,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+  ],
+  points: {
+    enter: [37, 19],
+    register: [13, 6],
+    queue: [16, 6],
+    smoke: [32, 6],
+    smokeFace: [38, 10],
+    office: [5, 3],
+    bench: [37, 2],
+    benchFace: [38, 2],
+    booth: [33, 10],
+    p1: [33, 11],
+    p2: [24, 10],
+    p3: [10, 10],
+    p4: [9, 14],
+    p5: [22, 15],
+    p6: [33, 14],
+    door: [20, 9],
+  },
+  routes: {
+    patrol: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'],
+  },
+  npcs: [
+    { role: 'customer', count: [2, 5] },
+    { role: 'clerk', at: 'register' },
+    { role: 'guard', at: 'booth', route: 'patrol' },
+    { role: 'mechanic', at: 'bench', chance: 0.5 },
+  ],
+  containers: [{ kind: 'office', x: 8, y: 1 }],
+  cameras: [
+    { x: 28, y: 1, facing: 150, sweep: 60 },
+    { x: 29, y: 8, facing: 150, sweep: 80 },
+  ],
+  vanEntry: [38, 20],
+  car: { x: 2, y: 16, facing: 'east' },
+};
+
+/**
+ * Depot B: the store on the east side (Depot A mirrored), vertical shelving, two rows of bays, the kiosk in the
+ * middle of the lot, the guard booth by the mechanic's yard, and the car at the southeast corner.
+ */
+export const DEPOT_B: LayoutDef = {
+  id: 'depot-b',
+  kind: 'depot',
+  variant: 1,
+  name: 'Charging depot',
+  grid: [
+    '########################################',
+    '#J,,,,,,,,#V.V..S..S..S..S...#zTzzzLLLz#',
+    '#N,,,,,,,,#.....S..S..S..S...#zzzzzzzzz#',
+    '#N,,,,,,,,#.....S..S..S..S...#zzzzzzzzz#',
+    '#,,,,,,,,,#..................#zzzzzzzzz#',
+    '#,,,,,,,,,#.............Rzzzz###d####d##',
+    '#,,,,,,,,,D.............Rzzzzdzzzzz#zzz#',
+    '#,,,,,,,,,#.............Rzzzz#zzzzz#zzz#',
+    '#,,,,,,,,,#WWWWWWWWDWWWWWWWWW###########',
+    '#,,,,,,,,,,__________________,,,,,,,,,,,',
+    '#,,,,G,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+    '#,,,,,,,,P,,,,,P,,,,,P,,,,,,,,,,,,,,,,,,',
+    '#,,,,,,,,B,,,,,B,,,,,B,,,,,,,,,,,,,,,,,,',
+    '#,,,,,,,,,,,,,,,,,,,,,,,,,,K,,,,,,,,,,,,',
+    '#,,,,,,,,P,,,,,P,,,,,P,,,,,,,,,,,,,,,,,,',
+    '#,,,,,,,,B,,,,,B,,,,,B,,,,,,,,,,,,,XXXXX',
+    '#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,XXXXX',
+    '#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,XXXXX',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+    ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+  ],
+  points: {
+    enter: [2, 19],
+    register: [26, 6],
+    queue: [23, 6],
+    smoke: [7, 6],
+    smokeFace: [1, 10],
+    office: [34, 3],
+    bench: [2, 2],
+    benchFace: [1, 2],
+    booth: [6, 10],
+    p1: [7, 11],
+    p2: [15, 10],
+    p3: [29, 10],
+    p4: [30, 14],
+    p5: [18, 16],
+    p6: [5, 15],
+    door: [19, 9],
+  },
+  routes: {
+    patrol: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'],
+  },
+  npcs: [
+    { role: 'customer', count: [2, 5] },
+    { role: 'clerk', at: 'register' },
+    { role: 'guard', at: 'booth', route: 'patrol' },
+    { role: 'mechanic', at: 'bench', chance: 0.5 },
+  ],
+  containers: [{ kind: 'office', x: 31, y: 1 }],
+  cameras: [
+    { x: 11, y: 1, facing: 30, sweep: 60 },
+    { x: 10, y: 8, facing: 30, sweep: 80 },
+  ],
+  vanEntry: [1, 20],
+  car: { x: 37, y: 16, facing: 'west' },
+};
