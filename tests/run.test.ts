@@ -36,6 +36,7 @@ import {
   shownType,
   validateMap,
 } from '../src/run/map';
+import { MemoryStore, defaultSave, loadSave, writeSave } from '../src/core/save';
 import { addHeat, applyStopOutcome, beginLeg, endLeg, missedTheShip, newRun } from '../src/run/run';
 import type { StopOutcome } from '../src/sim/types';
 
@@ -374,5 +375,33 @@ describe('checkpoints (spec §11.1–11.2)', () => {
     expect(checkpointResult(69)).toBe('pass');
     expect(checkpointResult(70)).toBe('papers');
     expect(checkpointResult(100)).toBe('bust');
+  });
+});
+
+describe('saving and continuing (spec §12.1)', () => {
+  it('a run mid-way survives the save slot and continues exactly as it would have', () => {
+    const run = newRun(12);
+    recruitJune(run.party, 60);
+    for (let i = 0; i < 3; i++) {
+      run.resources.carBattery = 100;
+      beginLeg(run, nextNodes(run.map)[0].id);
+      applyStopOutcome(run, outcome(run, { alert: i === 1 }), currentNode(run.map).id);
+      endLeg(run, false);
+    }
+    addRumor(run.rumors, 'patrols', nextNodes(run.map)[0]);
+    const store = new MemoryStore();
+    const data = defaultSave();
+    data.run = run;
+    expect(writeSave(store, data)).toBe(true);
+    const loaded = loadSave(store);
+    expect(loaded.message).toBeNull();
+    const back = loaded.data.run!;
+    expect(back).toEqual(run);
+    // The seeded stream continues where it left off.
+    for (const r of [run, back]) {
+      r.resources.carBattery = 100;
+      beginLeg(r, nextNodes(r.map)[0].id);
+    }
+    expect(back).toEqual(run);
   });
 });

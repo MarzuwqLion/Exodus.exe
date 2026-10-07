@@ -11,7 +11,7 @@ import { Rng, hashSeed } from '../core/rng';
 import type { AndroidId, MapNode, MemberId, MemberState, Resources, RunState, Slot } from '../core/types';
 import type { StopConfig } from '../sim/stop';
 import type { StopOutcome } from '../sim/types';
-import { kioskHeat } from './june';
+import { juneLeg, kioskHeat } from './june';
 import { currentNode, generateMap, nodeById, revealAhead, rumorAhead, rumorMods } from './map';
 import { activeAndroids, clamp100, juneOf, startingParty, startingResources } from './party';
 import { stationLayout, keeperForColumn } from './station';
@@ -99,6 +99,7 @@ export function beginLeg(run: RunState, toId: string): LegPlan {
   if (!cur.next.includes(toId)) throw new Error(`${toId} is not reachable from ${cur.id}`);
   const to = nodeById(run.map, toId);
   const B = TUNING.battery;
+  juneLeg(run.party);
   const walking = run.resources.carBattery < to.distance;
   if (walking) run.day += 1;
   else run.resources.carBattery -= to.distance;
@@ -213,7 +214,7 @@ export function applyStopOutcome(run: RunState, out: StopOutcome, where: string)
  * units still at 0 Battery shut down for good, units at 0 Integrity will reset at the next stop, and the road
  * ahead reveals itself.
  */
-export function endLeg(run: RunState, atStation: boolean): { deadBattery: AndroidId[] } {
+export function endLeg(run: RunState, atStation: boolean): { deadBattery: AndroidId[]; revealed: MapNode[] } {
   const H = TUNING.heat;
   if (!run.alertThisLeg) addHeat(run, -H.decayPerLeg);
   if (atStation) addHeat(run, -H.stationDecay);
@@ -227,9 +228,9 @@ export function endLeg(run: RunState, atStation: boolean): { deadBattery: Androi
       run.stats.lostLog.push({ member: m.id, where: currentNode(run.map).name, how: 'ran out of charge' });
     } else if (m.integrity <= 0 && !run.pendingResets.includes(m.id)) run.pendingResets.push(m.id);
   }
-  revealAhead(run.map, run.party);
+  const revealed = revealAhead(run.map, run.party);
   run.phase = 'map';
-  return { deadBattery };
+  return { deadBattery, revealed };
 }
 
 /** Clamp every member's stats after any change (events, camp). */

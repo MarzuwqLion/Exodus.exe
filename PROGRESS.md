@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M5.11 Economy simulator, then the run scenes (M5.2–M5.8, M5.10)
+**Current task:** M6.1 The Port
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -65,16 +65,16 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 ## M5 — The run
 
 - [x] M5.1 Map generation, validation, reveal rules
-- [ ] M5.2 Map scene rendering and the sailing clock
-- [ ] M5.3 Drive scene (all regions and weather, billboards, fast-forward, walking legs)
-- [ ] M5.4 Events engine and 24 road events
-- [ ] M5.5 Remaining content (§12.10): questions, conversations, keepers, barks, Lantern, epilogue, voyage
-- [ ] M5.6 Camp scene and management panel
-- [ ] M5.7 Lantern message system
-- [ ] M5.8 Checkpoints: queue, interrogation, breathing scan, bust
+- [x] M5.2 Map scene rendering and the sailing clock
+- [x] M5.3 Drive scene (all regions and weather, billboards, fast-forward, walking legs)
+- [x] M5.4 Events engine and 24 road events
+- [x] M5.5 Remaining content (§12.10): questions, conversations, keepers, barks, Lantern, epilogue, voyage
+- [x] M5.6 Camp scene and management panel
+- [x] M5.7 Lantern message system
+- [x] M5.8 Checkpoints: queue, interrogation, breathing scan, bust
 - [x] M5.9 Heat and enforcement escalation
-- [ ] M5.10 Save and continue (autosave at camp and Station)
-- [ ] M5.11 Exit: checkpoint bot bands and economy simulator bands pass
+- [x] M5.10 Save and continue (autosave at camp and Station)
+- [x] M5.11 Exit: checkpoint bot bands and economy simulator bands pass
 
 ## M6 — The finale
 

@@ -40,7 +40,7 @@ import {
   startCheckpoint,
 } from '../src/run/checkpoint';
 import { choiceAvailable, pickEvent, resolveChoice } from '../src/run/events';
-import { activeJune, juneLeavesAtStation, juneLeg } from '../src/run/june';
+import { activeJune, juneLeavesAtStation } from '../src/run/june';
 import { currentNode, nextNodes, rumorAhead, shownType } from '../src/run/map';
 import { activeAndroids, clamp100 } from '../src/run/party';
 import {
@@ -515,7 +515,6 @@ export function simulateRun(seed: number, policy: Policy, lib: Map<string, StopR
   });
   for (let legs = 0; legs < TUNING.run.columns + 2; legs++) {
     const to = policy.route(run, nextNodes(run.map), rng);
-    juneLeg(run.party);
     const plan = beginLeg(run, to.id);
     if (plan.event) playEvent(run, policy, rng);
     if (missedTheShip(run)) return finish('missed');

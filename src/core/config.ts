@@ -23,6 +23,7 @@ export const SCENE_NAMES = [
   'street',
   'lot',
   'compromised',
+  'run',
 ] as const;
 export type SceneName = (typeof SCENE_NAMES)[number];
 

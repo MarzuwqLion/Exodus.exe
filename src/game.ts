@@ -19,6 +19,7 @@ import { InputManager } from './input/manager';
 import { CameraRig } from './render/camera';
 import { Pipeline } from './render/pipeline';
 import { C } from './render/palettes';
+import type { RunFlow } from './scenes/runflow';
 import type { GameScene } from './scenes/scene';
 import { VerticalMenu, drawControls, settingsItems } from './ui/menus';
 import { UiSurface } from './ui/surface';
@@ -57,6 +58,8 @@ export class Game {
   tickMs = 0;
   fps = 60;
   pause: PauseState | null = null;
+  /** The run in progress (its flow between scenes), if any. */
+  flow: RunFlow | null = null;
   private registry = new Map<string, SceneFactory>();
   private blackScene = new THREE.Scene();
   private blackRig = new CameraRig();
