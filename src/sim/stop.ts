@@ -39,6 +39,7 @@ import { resolveCombat } from './combat';
 import { updateBehaviors } from './behaviors';
 import { perceive } from './perception';
 import { integrate, separate, type Mover } from './movement';
+import { setupPort, updatePort, type PortVehicle } from './port';
 
 export interface PortRules {
   /** Real seconds for the dawn clock (4:50 → 6:00). */
@@ -122,9 +123,22 @@ export interface PortState {
   /** Minutes since midnight on the dawn clock. */
   clock: number;
   horn: boolean;
+  /** Seconds since the horn (-1 before it). */
   gangwayT: number;
+  /** Members aboard, and members through the arch (indices). */
   aboard: Set<number>;
   gatePassed: Set<number>;
+  /** The member being scanned at the arch (-1: nobody). */
+  archScan: number;
+  /** The gate operator (an NPC index, -1 if none). */
+  operator: number;
+  vehicles: PortVehicle[];
+  mensahSaid: boolean;
+  /** The terminal has sent its Recyclers for an ALERT. */
+  alertForces: boolean;
+  /** The gangway is up: Recyclers hold the berth (Mensah's crew won't lower it onto them). */
+  gangwayUp: boolean;
+  holdSaidAt: number;
 }
 
 const MEMBER_ORDER: readonly MemberId[] = ['wren', 'brick', 'vesper', 'june'];
@@ -234,6 +248,13 @@ export class StopSim {
           gangwayT: -1,
           aboard: new Set(),
           gatePassed: new Set(),
+          archScan: -1,
+          operator: -1,
+          vehicles: [],
+          mensahSaid: false,
+          alertForces: false,
+          gangwayUp: false,
+          holdSaidAt: -Infinity,
         }
       : null;
     this.setupMembers();
@@ -241,6 +262,7 @@ export class StopSim {
     this.setupFixtures();
     setupCameras(this);
     spawnNpcs(this);
+    if (this.port) setupPort(this);
     if (cfg.startAlert) this.raiseAlert({ x: this.members[0]?.x ?? 0, y: this.members[0]?.y ?? 0 });
   }
 
@@ -324,8 +346,11 @@ export class StopSim {
       const m = newMember(this.members.length, id, state, p.x, p.y);
       if (out) m.mode = 'gone';
       else if (st.kind === 'android' && st.status === 'shutdown') {
-        // A carried shut-down unit stays in the car during the stop.
-        m.mode = 'inCar';
+        // A carried shut-down unit stays in the car during a stop. At the Port it has to be carried aboard.
+        if (this.cfg.port) {
+          m.mode = 'shutdown';
+          m.downT = TUNING.shutdown.reviveWindow + 1;
+        } else m.mode = 'inCar';
       }
       this.members.push(m);
     }
@@ -442,6 +467,7 @@ export class StopSim {
     if (
       m.mode === 'gone' ||
       m.mode === 'inCar' ||
+      m.mode === 'aboard' ||
       m.mode === 'shutdown' ||
       m.mode === 'down' ||
       m.mode === 'carried' ||
@@ -454,7 +480,7 @@ export class StopSim {
 
   /** In the world and perceivable (includes shut-down and down members; not those in the car or gone). */
   present(m: MemberActor): boolean {
-    return m.mode !== 'gone' && m.mode !== 'inCar';
+    return m.mode !== 'gone' && m.mode !== 'inCar' && m.mode !== 'aboard';
   }
 
   isAndroid(m: MemberActor): boolean {
@@ -621,6 +647,7 @@ export class StopSim {
     this.updateAlert(dt);
     this.updateHeavies(dt);
     this.updateExit(dt);
+    if (this.port) updatePort(this, dt);
   }
 
   private updateWeather(dt: number): void {
@@ -641,7 +668,7 @@ export class StopSim {
   private moveAll(dt: number): void {
     const movers: Mover[] = [];
     for (const m of this.members) {
-      if (m.mode === 'gone' || m.mode === 'inCar') continue;
+      if (m.mode === 'gone' || m.mode === 'inCar' || m.mode === 'aboard') continue;
       if (m.mode === 'carried') {
         const c = this.members[m.carriedBy];
         if (c) {

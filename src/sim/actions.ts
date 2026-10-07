@@ -10,6 +10,7 @@ import { availableBlends, blendDuration, LOOPING, nearestSeat } from './blend';
 import { pressScan, stepScan } from './breathing';
 import { F } from './grid';
 import { lootText } from './loot';
+import { archInteraction, archScanDone, useArch } from './port';
 import type { StopSim } from './stop';
 import type { BlendKind, ContainerState, MemberActor, NpcActor } from './types';
 
@@ -28,7 +29,9 @@ export type InteractionKind =
   | 'hack'
   | 'kiosk'
   | 'bag'
-  | 'talk';
+  | 'talk'
+  /** The Port's scanner arch (Papers, a breathing scan, or waved through). */
+  | 'arch';
 
 export interface Interaction {
   kind: InteractionKind;
@@ -51,6 +54,11 @@ function memberCanUse(m: MemberActor): boolean {
 /** The best interaction for a member right now (spec §10, §8.10, §11.4). */
 export function findInteraction(sim: StopSim, m: MemberActor): Interaction | null {
   if (!memberCanUse(m) && m.mode !== 'carry') return null;
+  // The Port's scanner arch, for whoever stands at it (carrying someone or not).
+  if (sim.port) {
+    const arch = archInteraction(sim, m);
+    if (arch) return arch;
+  }
   if (m.mode === 'carry') {
     if (sim.inExit(m.x, m.y)) return null;
     return { kind: 'putDown', verb: 'Put down', hold: 0, target: m.carrying, x: m.x, y: m.y };
@@ -362,6 +370,10 @@ export function startInteraction(sim: StopSim, m: MemberActor, it: Interaction):
     case 'talk':
       m.vx = m.vy = 0;
       sim.emit({ t: 'talk', npc: it.target, member: m.idx });
+      return;
+    case 'arch':
+      m.vx = m.vy = 0;
+      useArch(sim, m);
       return;
     case 'search':
     case 'pry':
@@ -881,8 +893,10 @@ export function resolveScan(sim: StopSim, m: MemberActor, judge: boolean): void 
     scanner.scanTarget = -1;
     scanner.stepT = 2;
   }
+  const atArch = !!sim.port && sim.port.archScan === m.idx;
+  const failed = !!s && m.state.kind === 'android' && s.meter >= TUNING.breathing.routineFailAt;
+  if (atArch) archScanDone(sim, m, !!s && judge && !failed);
   if (!s || !judge) return;
-  const failed = m.state.kind === 'android' && s.meter >= TUNING.breathing.routineFailAt;
   if (failed) {
     if (scanner) scanner.obs.awareness[m.id] = TUNING.awareness.alarmed;
     sim.raiseAlert({ x: m.x, y: m.y });

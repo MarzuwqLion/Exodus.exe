@@ -150,16 +150,26 @@ export function stopConfigForRun(
     if (!keeper) throw new Error(`no keeper for column ${node.column}`);
     layout = stationLayout(keeper, o.compromised);
   } else layout = layoutFor(node.type as StopLayoutKind, node.layoutVariant);
+  const resources = { ...run.resources };
+  // The Port (spec §11.5): a thunderstorm before dawn. If the party kept Captain Mensah's two Parts for her,
+  // they're handed over at the gate and her friends there wave the party through.
+  let port: StopConfig['port'];
+  if (node.type === 'port') {
+    const mensah = run.flags.includes('mensah-part') && resources.parts >= TUNING.port.mensahParts;
+    if (mensah) resources.parts -= TUNING.port.mensahParts;
+    port = { seconds: TUNING.port.realSeconds, gateCrewSympathizers: mensah };
+  }
   return {
     layout,
     seed: hashSeed('stop', run.seed, run.leg),
     region: node.region,
-    weather: node.weather,
+    weather: port ? 'storm' : node.weather,
     heat: run.heat,
     day: run.day,
     party: run.party.map((m) => ({ ...m })),
     control: { ...run.control },
-    resources: { ...run.resources },
+    resources,
+    port,
     mods: [...run.nextStopMods, ...rumorMods(run.rumors, node.id)],
     flags: [...run.flags],
     pendingResets: [...run.pendingResets],

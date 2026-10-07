@@ -4,6 +4,7 @@ import { CHECKPOINT } from './checkpoint';
 import { DEPOT_A, DEPOT_B } from './depot';
 import { DINER_A, DINER_B } from './diner';
 import { GAS_A, GAS_B } from './gas';
+import { PORT } from './port';
 import { STATION_CHURCH, STATION_FEEDSTORE, STATION_KITCHEN, compromised } from './station';
 import { TEST_LOT } from './test';
 
@@ -14,6 +15,7 @@ export const STOP_LAYOUTS = {
   station: [STATION_KITCHEN, STATION_FEEDSTORE, STATION_CHURCH],
   compromised: [compromised(STATION_KITCHEN), compromised(STATION_FEEDSTORE), compromised(STATION_CHURCH)],
   checkpoint: [CHECKPOINT],
+  port: [PORT],
   test: [TEST_LOT],
 } as const satisfies Record<string, readonly LayoutDef[]>;
 

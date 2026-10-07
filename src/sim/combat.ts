@@ -38,11 +38,17 @@ function strike(sim: StopSim, m: MemberActor, kind: 'light' | 'heavy'): void {
     hitAny = true;
     n.hp -= dmg;
     n.hitFlash = 0.12;
-    n.stunT = kind === 'heavy' ? 0.6 : 0.3;
-    n.attackT = -1;
+    // A charged heavy staggers and breaks a telegraphed swing; a light hit only rocks them (spec §8.9: combat
+    // is costly, and mashing light hits shouldn't hold a Recycler down).
+    if (kind === 'heavy') {
+      n.stunT = Math.max(n.stunT, C.heavyStun);
+      n.attackT = -1;
+    } else n.stunT = Math.max(n.stunT, C.lightStun);
     const a = angleOf(dx, dy);
-    n.vx += Math.cos(a) * kb;
-    n.vy += Math.sin(a) * kb;
+    // A Recycler holding a post (the Port's berth) braces against it.
+    const k = n.post ? kb * TUNING.port.postedKnockback : kb;
+    n.vx += Math.cos(a) * k;
+    n.vy += Math.sin(a) * k;
     n.activity = 'flinch';
     n.activityT = 0;
     // Being hit makes anyone a witness.

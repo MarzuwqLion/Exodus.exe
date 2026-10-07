@@ -99,9 +99,17 @@ function droneRoute(sim: StopSim, offset: number): Point[] {
   return offset % 2 === 0 ? pts : pts.reverse();
 }
 
-export function spawnDrone(sim: StopSim): DroneActor {
+/** A layout route's points (null if it has fewer than two). */
+function namedRoute(sim: StopSim, name: string): Point[] | null {
+  const pts = (sim.cfg.layout.routes?.[name] ?? [])
+    .map((n) => sim.layout.waypoints.get(n))
+    .filter((p): p is Point => !!p);
+  return pts.length > 1 ? pts : null;
+}
+
+export function spawnDrone(sim: StopSim, beat?: string): DroneActor {
   // Drones come in over a random point of their loop, so a patrol's timing can't be learned by heart.
-  const loop = droneRoute(sim, sim.drones.length);
+  const loop = (beat ? namedRoute(sim, beat) : null) ?? droneRoute(sim, sim.drones.length);
   const k = sim.rng.int(0, loop.length - 1);
   const route = [...loop.slice(k), ...loop.slice(0, k)];
   const start = route[0];
@@ -426,7 +434,9 @@ function hostileAi(sim: StopSim, h: NpcActor, dt: number): void {
     }
   }
   h.stepT = 0;
-  const target = visibleTarget(sim, h);
+  let target = visibleTarget(sim, h);
+  // A hostile holding a post (the Port's berth) only goes after someone close to it.
+  if (h.post && target && dist(target, h.post) > TUNING.port.postLeash) target = null;
   // Attacks in progress.
   if (h.attackT >= 0) {
     h.attackT += dt;
@@ -475,6 +485,20 @@ function hostileAi(sim: StopSim, h: NpcActor, dt: number): void {
       steer(h, 0, 0, dt);
       h.facing = angleOf(target.x - h.x, target.y - h.y);
       setAct(h, 'aim');
+    }
+    return;
+  }
+  // Holding a post: back to it, facing out.
+  if (h.post) {
+    if (dist(h, h.post) > 0.4) {
+      if (h.path.length === 0 || h.pathI >= h.path.length || !h.target || dist(h.target, h.post) > 0.3)
+        goTo(sim, h, h.post);
+      walk(sim, h, dt, 2.2);
+      setAct(h, 'walk');
+    } else {
+      steer(h, 0, 0, dt);
+      h.facing = Math.PI / 2 + Math.sin(sim.time * 0.7 + h.idx) * 0.6;
+      setAct(h, 'idle');
     }
     return;
   }

@@ -285,7 +285,7 @@ export class StopView {
     for (let i = 0; i < sim.members.length; i++) {
       const m = sim.members[i];
       const a = this.members[i];
-      const show = m.mode !== 'gone' && m.mode !== 'inCar';
+      const show = m.mode !== 'gone' && m.mode !== 'inCar' && m.mode !== 'aboard';
       a.inst.visible = show;
       if (!show) continue;
       this.syncMember(m, a, alpha, step);

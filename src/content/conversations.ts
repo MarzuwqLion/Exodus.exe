@@ -615,6 +615,9 @@ export const MENSAH_DECK_LINE: string =
 /** Called from the gangway when the party reaches the berth (§11.5). */
 export const MENSAH_GANGWAY_LINE: string = "Here! Up the gangway. Don't stop for anything.";
 
+/** Called from the deck while Recyclers hold the berth: the crew won't lower the gangway onto them. */
+export const MENSAH_HOLD_LINE: string = "Not with them standing there! Clear the dock and we'll put it down.";
+
 // ---------------------------------------------------------------------------------------------
 // Screens (§13.4, §16.2, §16.3)
 // ---------------------------------------------------------------------------------------------

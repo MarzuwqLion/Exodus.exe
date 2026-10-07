@@ -65,6 +65,9 @@ export const LEGEND: Record<string, TileInfo> = {
   '&': { name: 'barrier', flags: 0, floor: 'asphalt' },
   $: { name: 'control booth', flags: 0, floor: 'asphalt' },
   w: { name: 'beacon window', flags: 0, floor: 'none' },
+  '=': { name: 'gangway', flags: F.WALK | F.OUTDOOR, floor: 'none' },
+  // The Sankofa's deck at the top of the gangway: whoever reaches it is aboard (the Port's "exit").
+  v: { name: 'deck', flags: F.WALK | F.OUTDOOR | F.EXIT, floor: 'none' },
   s: { name: 'stove', flags: 0, floor: 'interior' },
   ' ': { name: 'void', flags: 0, floor: 'none' },
 };
@@ -360,7 +363,9 @@ export function validateLayout(def: LayoutDef): LayoutProblem[] {
   const { grid, waypoints, containers, exitTiles } = parsed;
   if (exitTiles.length === 0) bad('no exit zone');
   const carT = { x: def.car.x + 0.5, y: def.car.y + 0.5 };
-  if (!grid.has(def.car.x, def.car.y, F.EXIT)) bad('car is not parked in the exit zone');
+  // At the Port the car is left in the lot; the way out is the ship's deck.
+  if (def.kind !== 'port' && !grid.has(def.car.x, def.car.y, F.EXIT))
+    bad('car is not parked in the exit zone');
   const field = grid.distanceField(exitTiles);
   const reach = (p: Point): boolean => field[grid.idx(Math.floor(p.x), Math.floor(p.y))] >= 0;
   for (const [name, p] of waypoints) {

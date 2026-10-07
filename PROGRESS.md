@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M6.1 The Port
+**Current task:** M6.1 The Port (simulation and bots done; scene next)
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 

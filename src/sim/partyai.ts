@@ -10,12 +10,14 @@ import { blendsFor, findInteraction, startAttack, startBlend, startInteraction, 
 import { LOOPING, nearestSeat } from './blend';
 import { F, type Point } from './grid';
 import { followPath, steer } from './movement';
+import { PORT_GEO } from '../content/layouts/port';
+import { archInteraction, archOpenTo, behindGate } from './port';
 import type { StopSim } from './stop';
 import type { BlendKind, MemberActor } from './types';
 
 export function updatePartyAi(sim: StopSim, dt: number): void {
   for (const m of sim.members) {
-    if (m.controller !== null || m.mode === 'gone' || m.mode === 'inCar') continue;
+    if (m.controller !== null || m.mode === 'gone' || m.mode === 'inCar' || m.mode === 'aboard') continue;
     aiControl(sim, m, dt);
     updateMode(sim, m, dt, true);
   }
@@ -106,7 +108,10 @@ function aiControl(sim: StopSim, m: MemberActor, dt: number): void {
     case 'blend': {
       const leader = leaderOf(sim, m);
       const far = leader && dist(leader, m) > 3.6;
-      const urgent = sim.exit.departing || (sim.alert.on && !sim.alert.searching);
+      const urgent =
+        sim.exit.departing ||
+        (sim.alert.on && !sim.alert.searching) ||
+        (!!sim.port && (!leader || sim.port.horn));
       if ((far || urgent) && m.blend && LOOPING.has(m.blend)) {
         m.blend = null;
         m.mode = 'free';
@@ -121,6 +126,7 @@ function aiControl(sim: StopSim, m: MemberActor, dt: number): void {
       return;
     }
     case 'carry': {
+      if (sim.port && portAi(sim, m, dt)) return;
       const exit = nearestExit(sim, m);
       if (sim.inExit(m.x, m.y)) {
         steer(m, 0, 0, dt);
@@ -138,6 +144,7 @@ function aiControl(sim: StopSim, m: MemberActor, dt: number): void {
       return;
   }
 
+  if (sim.port && portAi(sim, m, dt)) return;
   // ALERT or departure: head for the car.
   if (sim.exit.departing || (sim.alert.on && !sim.alert.searching)) {
     // Fight only when blocked: a hostile right on top of them.
@@ -253,6 +260,96 @@ function aiControl(sim: StopSim, m: MemberActor, dt: number): void {
   // Idle: face roughly the way the leader faces, and Blend before stillness becomes suspicious.
   m.facing += Math.sin(angleOf(Math.cos(leader.facing), Math.sin(leader.facing)) - m.facing) * dt;
   if (m.stillT > 0.8 || m.suspicion > 20) idleBlend(sim, m);
+}
+
+function goWalk(sim: StopSim, m: MemberActor, p: Point, speed: number, dt: number): void {
+  if (
+    m.path.length === 0 ||
+    m.pathI >= m.path.length ||
+    m.aiT <= 0 ||
+    (m.aiTarget && dist(m.aiTarget, p) > 1)
+  ) {
+    pathTo(sim, m, p);
+    m.aiT = 1;
+  }
+  walkPath(sim, m, speed, dt);
+}
+
+/**
+ * The Port (spec §11.5): a follower goes through the scanner arch after its player (Papers first, else the
+ * breathing scan), waits on the apron side rather than walk all the way round when its player is still in the
+ * yard, and heads up the gangway once the horn has gone, ALERT is on, or nobody is left to follow. Carriers
+ * take their load to the ship. Returns true when it steered the member this tick.
+ */
+function portAi(sim: StopSim, m: MemberActor, dt: number): boolean {
+  const port = sim.port!;
+  const leader = leaderOf(sim, m);
+  const carrying = m.mode === 'carry';
+  const urgent = port.horn || (sim.alert.on && !sim.alert.searching) || !leader || carrying;
+  const fast = port.horn || sim.alert.on;
+  let speed = fast ? 3.6 : TUNING.movement.briskSpeed * 0.8;
+  if (carrying && m.id !== 'brick') speed = Math.min(speed, 1.2);
+  if (m.lowPower) speed = Math.min(speed, TUNING.movement.briskSpeed * TUNING.movement.lowPowerSpeedMult);
+  if (behindGate(m) && !port.gatePassed.has(m.idx)) {
+    const after = urgent || (!!leader && !behindGate(leader));
+    if (after && archOpenTo(sim, m)) {
+      const spot = PORT_GEO.archSouth;
+      if (dist(m, spot) > TUNING.port.archReach * 0.6) {
+        goWalk(sim, m, spot, speed, dt);
+        return true;
+      }
+      steer(m, 0, 0, dt);
+      const it = archInteraction(sim, m);
+      if (it && !it.disabled) startInteraction(sim, m, it);
+      return true;
+    }
+    // Otherwise the long way round: the pathfinder takes the waterline path on the way to the deck.
+  } else if (!urgent && leader && behindGate(leader) && m.y < PORT_GEO.fenceY) {
+    // Through ahead of the player: wait on the apron side of the arch rather than walk all the way round.
+    const wait = { x: PORT_GEO.archNorth.x + (m.idx % 2 === 0 ? 1.5 : -1.5), y: PORT_GEO.archNorth.y - 1.5 };
+    if (dist(m, wait) > 0.8) goWalk(sim, m, wait, TUNING.movement.briskSpeed * 0.7, dt);
+    else steer(m, 0, 0, dt);
+    return true;
+  }
+  if (!urgent) return false;
+  // The berth is held (the gangway is up), or hostiles stand in the way at its foot: clear them.
+  const foot = sim.layout.waypoints.get('gangwayFoot');
+  if (foot && m.state.kind === 'android' && !carrying && dist(m, foot) < 9 && !behindGate(m)) {
+    let foe: (typeof sim.npcs)[number] | null = null;
+    let fd = Infinity;
+    for (const n of sim.npcs) {
+      if (!n.hostile || !sim.isActiveNpc(n)) continue;
+      const holding = port.gangwayUp && dist(n, foot) < TUNING.port.berthHoldRadius + 0.5;
+      const d = dist(n, m);
+      if ((holding || d < 1.3) && d < fd) {
+        fd = d;
+        foe = n;
+      }
+    }
+    if (foe) {
+      if (fd <= 1.3) startAttack(sim, m, 'light', { x: foe.x - m.x, y: foe.y - m.y });
+      else goWalk(sim, m, { x: foe.x, y: foe.y }, Math.max(speed, TUNING.movement.briskSpeed), dt);
+      return true;
+    }
+  }
+  // Pick up a shut-down teammate on the way if nobody else has.
+  if (!carrying && m.carrying < 0) {
+    for (const o of sim.members) {
+      if (o.mode !== 'shutdown' || dist(o, m) > 4) continue;
+      if (sim.members.some((x) => x !== m && (x.channel?.target === o.idx || x.carrying === o.idx))) continue;
+      if (dist(o, m) < 1.3) {
+        const it = findInteraction(sim, m);
+        if (it && (it.kind === 'pickUp' || it.kind === 'revive')) {
+          startInteraction(sim, m, { ...it, kind: 'pickUp', hold: 0.8 });
+          return true;
+        }
+      }
+      goWalk(sim, m, { x: o.x, y: o.y }, speed, dt);
+      return true;
+    }
+  }
+  goWalk(sim, m, nearestExit(sim, m), speed, dt);
+  return true;
 }
 
 /** Where a follower waits while its player is in a staff-only room: beside the nearest way out. */

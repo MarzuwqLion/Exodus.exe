@@ -88,6 +88,8 @@ export type MemberMode =
   | 'factory'
   | 'channel'
   | 'inCar'
+  /** Aboard the Sankofa (the Port). */
+  | 'aboard'
   | 'gone';
 
 /** A held interaction in progress (revive, pull back, pry, plug in, raise gate, leave, help up). */
@@ -287,6 +289,8 @@ export interface NpcActor {
   fromVan: boolean;
   /** Routine scanner (sweep) target member index, or -1. */
   scanTarget: number;
+  /** A hostile holding a position (the Port's berth): it searches around here when it loses sight. */
+  post: Point | null;
 }
 
 export interface CameraObserver {

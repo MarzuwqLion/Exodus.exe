@@ -115,6 +115,7 @@ export function newNpc(sim: StopSim, role: NpcRole, x: number, y: number): NpcAc
     found: false,
     fromVan: false,
     scanTarget: -1,
+    post: null,
   };
 }
 
@@ -205,6 +206,11 @@ function spotsOf(sim: StopSim): CustomerSpot[] {
 // -------------------------------------------------------------------------------------------------
 
 export function goTo(sim: StopSim, n: NpcActor, p: Point, avoidStaff = false): boolean {
+  // At the Port, hostiles stop at the foot of the gangway: Mensah's crew won't let them up.
+  if (n.hostile && sim.port) {
+    const ch = sim.grid.charAt(Math.floor(p.x), Math.floor(p.y));
+    if (ch === '=' || ch === 'v') p = sim.layout.waypoints.get('gangwayFoot') ?? p;
+  }
   const avoid = avoidStaff ? (tx: number, ty: number) => (sim.grid.has(tx, ty, F.STAFF) ? 20 : 0) : undefined;
   const raw = sim.grid.path(n.x, n.y, p.x, p.y, avoid);
   n.target = p;
@@ -792,7 +798,7 @@ function reactCivilian(sim: StopSim, n: NpcActor, dt: number): void {
       const d = dist(t.m, n);
       n.lookAt = { x: t.m.x, y: t.m.y };
       n.lookT = 0.5;
-      if (d > 4 && n.modeT > 1.5 && n.role !== 'clerk') {
+      if (d > 4 && n.modeT > 1.5 && n.role !== 'clerk' && !n.post) {
         if (n.path.length === 0 || n.pathI >= n.path.length)
           goTo(sim, n, sim.grid.nearestWalkable(t.m.x, t.m.y) ?? t.m);
         walk(sim, n, dt, 0.9);

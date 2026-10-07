@@ -7,6 +7,7 @@
 import { TUNING } from '../content/tuning';
 import { angleDiff, clamp01, lerp } from '../core/math';
 import { covered } from './actions';
+import { trespassing } from './port';
 import { F } from './grid';
 import type { StopSim } from './stop';
 import type { MemberActor } from './types';
@@ -70,6 +71,7 @@ export function updateBehaviors(sim: StopSim, dt: number): void {
     // A spoofed charging session (yours or the car's) is suspicious while watched (spec §8.2, §10.4).
     if (m.plug) rate += R.spoofedCharging;
     if (sim.grid.flagAt(m.x, m.y, F.STAFF)) rate += R.staffZone;
+    if (sim.port && trespassing(sim, m)) rate += R.portTrespass;
     if (m.mode === 'carry') rate += R.carryUnit;
 
     if (android) {

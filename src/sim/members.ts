@@ -300,7 +300,7 @@ function ping(sim: StopSim, m: MemberActor): void {
 /** Pick the visible activity for every member from mode and motion. */
 export function updateMemberActivities(sim: StopSim): void {
   for (const m of sim.members) {
-    if (m.mode === 'gone' || m.mode === 'inCar') continue;
+    if (m.mode === 'gone' || m.mode === 'inCar' || m.mode === 'aboard') continue;
     const sp = Math.hypot(m.vx, m.vy);
     m.speed01 = Math.min(1, sp / TUNING.movement.briskSpeed);
     let next: Activity = m.activity;

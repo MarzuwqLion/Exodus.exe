@@ -108,6 +108,8 @@ export const TUNING = {
     /** Plugged in on a spoofed session (Papers or a hack): androids have no real ID (spec §8.2). */
     spoofedCharging: 11,
     staffZone: 8,
+    /** At the Port: in the yard, on the waterline path, or on the apron without coming through the gate. */
+    portTrespass: 9,
     carryUnit: 40,
     stillnessStartSeconds: 4,
     stillnessRateStart: 5,
@@ -217,6 +219,9 @@ export const TUNING = {
     hitPauseFrames: 3,
     knockback: 3.5,
     heavyKnockback: 6,
+    /** Stagger on a hostile hit by a light attack (doesn't break its swing) and by a heavy (breaks it). */
+    lightStun: 0,
+    heavyStun: 0.6,
     recyclerHp: 60,
     gunnerHp: 50,
     guardHp: 50,
@@ -439,6 +444,32 @@ export const TUNING = {
     gangwaySeconds: 60,
     baseRecyclers: 2,
     mensahParts: 2,
+    /** Recyclers who come out of the terminal when the horn sounds. */
+    hornRecyclers: 2,
+    yardDrones: 1,
+    waterlineDrones: 2,
+    truckLength: 10,
+    truckSpeed: 3,
+    truckWait: [3, 8] as [number, number],
+    craneSpeed: 0.8,
+    craneWait: [5, 12] as [number, number],
+    /** Row the crane's hanging container is centered on, and its half extents (x, y). */
+    craneLoadY: 17,
+    craneLoadHalf: [1.2, 3] as [number, number],
+    /** The crane's legs stand this far either side of its center along the rails. */
+    craneLegOffset: 3.5,
+    /** How close to the arch's front a member must stand to use it. */
+    archReach: 1.3,
+    /** The arch's breathing scan starts this much warier per Heat level (like checkpoint guards, §11.6). */
+    archScanPerHeat: 10,
+    /** "They know you're coming": Recyclers posted across the gangway's foot, per Heat level. */
+    berthGuardsPerHeat: 1,
+    /** A posted Recycler only goes after someone this close to its post, and braces against knockback. */
+    postLeash: 4,
+    postedKnockback: 0.25,
+    /** Mensah's crew keeps the gangway up while any Recycler is this close to its foot. */
+    berthHoldRadius: 5,
+    mensahCallRange: 9,
   },
 
   meta: {

@@ -236,7 +236,18 @@ export function perceive(sim: StopSim, dtP: number): void {
       if (!perceivable(sim, m)) continue;
       let a = d.obs.awareness[m.id] ?? 0;
       const indoor = sim.grid.flagAt(m.x, m.y, F.INTERIOR);
-      let visible = inView(sim, d.x, d.y, d.beam, O.drone.coneDeg, O.drone.range * range, m.x, m.y, false);
+      // At the Port the stacks are taller than the beam is steep: they shadow it.
+      let visible = inView(
+        sim,
+        d.x,
+        d.y,
+        d.beam,
+        O.drone.coneDeg,
+        O.drone.range * range,
+        m.x,
+        m.y,
+        !!sim.port,
+      );
       if (visible && indoor) visible = nearWindow(sim, m.x, m.y);
       if (visible) {
         m.seen = true;
