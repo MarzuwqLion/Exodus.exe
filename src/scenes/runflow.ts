@@ -12,6 +12,7 @@ import { lanternFor, legMessages, stationRevealedMessage } from '../run/lantern'
 import { currentNode } from '../run/map';
 import {
   allAndroidsLost,
+  applyPortOutcome,
   applyStopOutcome,
   beginLeg,
   endLeg,
@@ -155,6 +156,20 @@ export class RunFlow {
     if (activeLowBattery(run)) this.say([lanternFor(run, 'low-battery')]);
     this.save();
     this.showMap();
+  }
+
+  /** The Port is over (spec §11.5): who made it aboard decides the ending. */
+  portEnded(outcome: StopOutcome): void {
+    if (outcome.end === 'allLost') return this.end('lost');
+    const aboard = applyPortOutcome(this.run, outcome);
+    if (!aboard.some((id) => id !== 'june')) return this.end('sailed-without');
+    this.sailed(aboard);
+  }
+
+  /** The Sankofa sails with these members aboard (at least one android): the voyage, then Ghana (§16). */
+  sailed(aboard: MemberId[]): void {
+    void aboard;
+    this.end('ghana');
   }
 
   /** The run is over, one way or another. The save slot is cleared. */

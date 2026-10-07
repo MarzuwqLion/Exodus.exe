@@ -205,6 +205,31 @@ export function applyStopOutcome(run: RunState, out: StopOutcome, where: string)
   run.phase = 'camp';
 }
 
+/**
+ * The Port is over (spec §11.5): whoever is aboard when the gangway comes up sails, shut-down units carried
+ * aboard included; anyone still ashore stays behind. Returns who sailed, in party order.
+ */
+export function applyPortOutcome(run: RunState, out: StopOutcome): MemberId[] {
+  applyStopOutcome(run, out, 'the Port');
+  const aboard = new Set(out.aboard);
+  for (const m of run.party) {
+    const gone = m.kind === 'android' ? m.status === 'lost' : m.status === 'left';
+    if (gone || aboard.has(m.id)) continue;
+    if (m.kind === 'android') {
+      m.status = 'lost';
+      run.stats.unitsLost += 1;
+    } else {
+      m.status = 'left';
+      run.stats.juneFate = 'left';
+    }
+    run.stats.lostLog.push({ member: m.id, where: 'the Port', how: 'left on the quay' });
+  }
+  if (aboard.has('june')) run.stats.juneFate = 'sailed';
+  run.carried = [];
+  run.phase = 'voyage';
+  return run.party.filter((m) => aboard.has(m.id)).map((m) => m.id);
+}
+
 // -------------------------------------------------------------------------------------------------
 // Heat (§11.6) and the end of a leg
 // -------------------------------------------------------------------------------------------------

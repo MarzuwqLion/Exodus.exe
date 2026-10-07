@@ -153,7 +153,7 @@ export class DriveScene implements GameScene {
     const rng = new Rng(hashSeed('drive', flow.run.seed, flow.run.leg));
     const [lo, hi] = TUNING.run.driveSeconds;
     this.length = SPEED * rng.range(lo, hi);
-    this.eventAt = flow.pendingEvent ? this.length * rng.range(0.4, 0.6) : Infinity;
+    this.eventAt = flow.pendingEvent ? this.length * rng.range(...TUNING.drive.eventAt) : Infinity;
     this.scene.fog = new THREE.FogExp2(C.slate0, node.weather === 'fog' ? 0.03 : 0.018);
     const k = new Kit();
     const road = buildRoad(k, this.length, node.region, rng);
@@ -261,7 +261,7 @@ export class DriveScene implements GameScene {
       return;
     }
     const fast = intents.some((it: PlayerIntent | null) => it?.interactHeld);
-    const k = fast ? 4 : 1;
+    const k = fast ? TUNING.drive.fastForward : 1;
     // Slow to a stop for the road event, then go on.
     let target = SPEED;
     if (this.dist < this.eventAt && this.eventAt - this.dist < 18)

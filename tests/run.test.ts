@@ -37,7 +37,15 @@ import {
   validateMap,
 } from '../src/run/map';
 import { MemoryStore, defaultSave, loadSave, writeSave } from '../src/core/save';
-import { addHeat, applyStopOutcome, beginLeg, endLeg, missedTheShip, newRun } from '../src/run/run';
+import {
+  addHeat,
+  applyPortOutcome,
+  applyStopOutcome,
+  beginLeg,
+  endLeg,
+  missedTheShip,
+  newRun,
+} from '../src/run/run';
 import type { StopOutcome } from '../src/sim/types';
 
 function withJune(trust = 50): MemberState[] {
@@ -403,5 +411,29 @@ describe('saving and continuing (spec §12.1)', () => {
       beginLeg(r, nextNodes(r.map)[0].id);
     }
     expect(back).toEqual(run);
+  });
+});
+
+describe('the Port outcome (spec §11.5)', () => {
+  it('whoever is aboard sails; anyone left on the quay is lost', () => {
+    const run = newRun(4);
+    recruitJune(run.party, 60);
+    const out = outcome(run, { aboard: ['wren', 'june'], end: 'left' });
+    const sailed = applyPortOutcome(run, out);
+    expect(sailed).toEqual(['wren', 'june']);
+    expect(run.party.find((m) => m.id === 'brick')!.status).toBe('lost');
+    expect(run.party.find((m) => m.id === 'vesper')!.status).toBe('lost');
+    expect(run.stats.unitsLost).toBe(2);
+    expect(run.stats.lostLog.map((l) => l.how)).toEqual(['left on the quay', 'left on the quay']);
+    expect(run.stats.juneFate).toBe('sailed');
+    expect(run.phase).toBe('voyage');
+  });
+
+  it('June left ashore stays behind', () => {
+    const run = newRun(4);
+    recruitJune(run.party, 60);
+    const sailed = applyPortOutcome(run, outcome(run, { aboard: ['wren', 'brick', 'vesper'] }));
+    expect(sailed).toEqual(['wren', 'brick', 'vesper']);
+    expect(run.stats.juneFate).toBe('left');
   });
 });
