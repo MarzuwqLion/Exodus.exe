@@ -11,6 +11,15 @@ import { ICONS, iconSize, type IconName } from './icons';
 
 export type Align = 'left' | 'center' | 'right';
 
+/** Colors for a button glyph: the key cap, its lower edge, and the label (default slate, night, fog). */
+export interface KeyColors {
+  key: number;
+  edge: number;
+  label: number;
+}
+
+const MAIN_KEY: KeyColors = { key: C.slate1, edge: C.night3, label: C.fog2 };
+
 export interface TextOpts {
   font?: 'text' | 'num';
   align?: Align;
@@ -244,14 +253,15 @@ export class UiSurface {
    * A button glyph: a small dark key with the button's label. Face buttons on PlayStation pads use shapes.
    * Returns the width drawn.
    */
-  button(g: ButtonGlyph, device: GlyphDevice, x: number, y: number): number {
+  button(g: ButtonGlyph, device: GlyphDevice, x: number, y: number, colors: KeyColors = MAIN_KEY): number {
     const label = glyphLabel(g, device);
     const ix = Math.round(x);
     const iy = Math.round(y);
+    const key = colors.key;
     if (device === 'playstation' && (g === 'A' || g === 'B' || g === 'X' || g === 'Y')) {
-      this.rect(ix + 1, iy, 7, 9, C.slate1);
-      this.rect(ix, iy + 1, 9, 7, C.slate1);
-      const c = C.fog2;
+      this.rect(ix + 1, iy, 7, 9, key);
+      this.rect(ix, iy + 1, 9, 7, key);
+      const c = colors.label;
       if (g === 'A') {
         for (let i = 0; i < 5; i++) {
           this.pixel(ix + 2 + i, iy + 2 + i, c);
@@ -261,7 +271,7 @@ export class UiSurface {
         this.frame(ix + 2, iy + 2, 5, 5, c);
       } else if (g === 'X') {
         this.frame(ix + 2, iy + 2, 5, 5, c);
-        this.rect(ix + 3, iy + 3, 3, 3, C.slate1);
+        this.rect(ix + 3, iy + 3, 3, 3, key);
       } else {
         this.pixel(ix + 4, iy + 2, c);
         this.rect(ix + 3, iy + 4, 3, 1, c);
@@ -273,10 +283,10 @@ export class UiSurface {
       }
       // Circle glyph is drawn as a ring: soften corners.
       if (g === 'B') {
-        this.pixel(ix + 2, iy + 2, C.slate1);
-        this.pixel(ix + 6, iy + 2, C.slate1);
-        this.pixel(ix + 2, iy + 6, C.slate1);
-        this.pixel(ix + 6, iy + 6, C.slate1);
+        this.pixel(ix + 2, iy + 2, key);
+        this.pixel(ix + 6, iy + 2, key);
+        this.pixel(ix + 2, iy + 6, key);
+        this.pixel(ix + 6, iy + 6, key);
       }
       return 9;
     }
@@ -284,13 +294,13 @@ export class UiSurface {
     const w = Math.max(9, tw + 4);
     const round = device === 'xbox' && label.length === 1;
     if (round) {
-      this.rect(ix + 1, iy, w - 2, 9, C.slate1);
-      this.rect(ix, iy + 1, w, 7, C.slate1);
+      this.rect(ix + 1, iy, w - 2, 9, key);
+      this.rect(ix, iy + 1, w, 7, key);
     } else {
-      this.rect(ix, iy, w, 9, C.slate1);
-      this.rect(ix, iy + 8, w, 1, C.night3);
+      this.rect(ix, iy, w, 9, key);
+      this.rect(ix, iy + 8, w, 1, colors.edge);
     }
-    this.text(label, ix + Math.floor((w - tw) / 2), iy + 1, C.fog2, { shadow: null });
+    this.text(label, ix + Math.floor((w - tw) / 2), iy + 1, colors.label, { shadow: null });
     return w;
   }
 
@@ -303,14 +313,15 @@ export class UiSurface {
     y: number,
     color: number = C.fog2,
     align: Align = 'left',
+    theme?: { keys: KeyColors; shadow: number | null },
   ): number {
     const bw = this.measureButton(g, device);
     const total = bw + 4 + measure(TEXT_FONT, verb);
     let sx = x;
     if (align === 'center') sx = x - total / 2;
     else if (align === 'right') sx = x - total;
-    this.button(g, device, sx, y);
-    this.text(verb, sx + bw + 4, y + 1, color);
+    this.button(g, device, sx, y, theme?.keys);
+    this.text(verb, sx + bw + 4, y + 1, color, theme ? { shadow: theme.shadow } : undefined);
     return total;
   }
 
