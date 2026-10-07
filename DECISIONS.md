@@ -25,3 +25,19 @@ One line per call: what was decided and why. Newest at the bottom of each sectio
 - Lowercase descenders use one row below the 5×7 cell (an 8-row glyph cell, 10 px line height) for legibility.
 - Car taillights use dim amber, never red (red is reserved).
 - A QA-only scene (`?scene=street`) holds the M1 test block for palette and shimmer tests.
+
+## M2–M3 — Characters, co-op, the depot loop
+
+- Charging on a spoofed session (Papers or a hack) raises suspicion while watched (+11/s): §8.2 lists "using a charger with a spoofed ID" and androids have no real ID. Papers still beat hacking: no 5 s minigame and no extra +10/s while hacking.
+- Lingering (§1.2 "lingering gets you caught"): an observer who has watched a member for more than 20 s gains +3/s rising to +5/s, even for normal behavior. Blending still outpaces it.
+- Proximity: awareness gains scale from ×1.35 at point blank to ×0.6 at the edge of an observer's range; guards and Recyclers gain ×1.5 (trained eyes) outside ALERT.
+- Patrol clock base times are 125/185/245 s (the spec's ~90/150/210 were starting values), so a cautious visit that leaves at the first drone lands in the 120–200 s band.
+- Loot: fewer Cells in containers (charging is the main Cells source), locker Skin patch chance 40%.
+- The bots model a person, not a perfect reflex: they react to the eye glyph (Suspicion over 30) after 0.5–1.2 s and let stillness reach 2.5–5 s before covering it. Calibrating against perfect reflexes made every careful visit risk-free.
+- Exposure in the bot bands means any ALERT during the stop.
+- Both depots got an exterior staff door into the back hall: from the bays the office was a 20 s walk, longer than the clerk's 15 s smoke break, so the distraction window was unusable.
+- Routine breathing scans resolve on the scanned member's side (pass, fail, or cut short by ALERT or a departing scanner). A Recycler leaving mid-scan used to freeze the member forever.
+- The parked car blocks its footprint; the party spawns on its camera side; the party AI only heads for exit tiles it can reach.
+- During ALERT, hostiles who see a party member gain an extra +60/s (+18/s while Searching) on top of ×3 gains, so Blending doesn't hide you from people already hunting you.
+- Guards fight with batons like Recyclers (the spec only describes Recycler combat); civilians never fight.
+- An active member outside the exit zone when the car leaves is left behind (lost; June is arrested). The car waits 10 s and the HUD counts down.

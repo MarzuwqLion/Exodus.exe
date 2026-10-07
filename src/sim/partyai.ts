@@ -54,7 +54,12 @@ function nearestExit(sim: StopSim, m: MemberActor): Point {
   let best = sim.exitTiles[0] ?? { x: car.x + 0.5, y: car.y + 0.5 };
   let bd = Infinity;
   for (const t of sim.exitTiles) {
-    const d = (t.x - m.x) ** 2 + (t.y - m.y) ** 2;
+    // Skip tiles under the parked car, and spread out over free ones.
+    if (!sim.grid.walkable(Math.floor(t.x), Math.floor(t.y))) continue;
+    const taken = sim.members.some(
+      (o) => o !== m && sim.present(o) && Math.hypot(o.x - t.x, o.y - t.y) < 0.5,
+    );
+    const d = (t.x - m.x) ** 2 + (t.y - m.y) ** 2 + (taken ? 4 : 0);
     if (d < bd) {
       bd = d;
       best = t;

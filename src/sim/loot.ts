@@ -15,13 +15,13 @@ export function rollLoot(kind: ContainerKind, rng: Rng): Partial<Resources> {
     case 'shelf':
       add('rations', between(L.shelf.rations as [number, number]));
       if (rng.chance(L.shelf.partsChance)) add('parts', 1);
-      add('cells', rng.int(2, 5));
+      add('cells', rng.int(1, 3));
       break;
     case 'locker':
       add('parts', between(L.locker.parts as [number, number]));
       if (rng.chance(L.locker.skinChance)) add('skinPatches', 1);
       if (rng.chance(L.locker.papersChance)) add('papers', 1);
-      add('cells', rng.int(3, 8));
+      add('cells', rng.int(2, 5));
       break;
     case 'register':
       if (rng.chance(L.register.papersChance)) add('papers', 1);
@@ -40,7 +40,7 @@ export function rollLoot(kind: ContainerKind, rng: Rng): Partial<Resources> {
     case 'office':
       if (rng.chance(L.office.papersChance)) add('papers', 1);
       add('parts', between(L.office.parts as [number, number]));
-      add('cells', rng.int(2, 6));
+      add('cells', rng.int(1, 4));
       break;
     case 'partsAisle':
       add('parts', between(L.partsAisle.parts as [number, number]));

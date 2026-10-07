@@ -67,6 +67,7 @@ export function updateBehaviors(sim: StopSim, dt: number): void {
       if (c?.private) rate += R.searchPrivate;
     }
     if (m.mode === 'hack') rate += R.hack;
+    if (m.plug === 'member') rate += R.spoofedCharging;
     if (sim.grid.flagAt(m.x, m.y, F.STAFF)) rate += R.staffZone;
     if (m.mode === 'carry') rate += R.carryUnit;
 

@@ -7,7 +7,7 @@
 import { TUNING } from '../content/tuning';
 import { BARKS } from '../content/barks';
 import { angleDiff, angleOf } from '../core/math';
-import type { ObserverState } from '../core/types';
+import type { Observer, ObserverState } from '../core/types';
 import { chassisMult } from './behaviors';
 import { F } from './grid';
 import { rollLoot } from './loot';
@@ -63,6 +63,20 @@ function blendDrop(sim: StopSim, m: MemberActor): number {
   return r;
 }
 
+/**
+ * Lingering (spec §1.2: "lingering gets you caught"): an observer who has watched someone for a while starts
+ * to wonder about them, even when they behave. Returns the extra awareness rate per second.
+ */
+function linger(o: Observer, m: MemberActor, dtP: number): number {
+  const A = TUNING.awareness;
+  const w = (o.watched ??= {});
+  const t = (w[m.id] ?? 0) + dtP;
+  w[m.id] = t;
+  if (t <= A.lingerAfter || m.state.kind !== 'android') return 0;
+  const k = Math.min(1, (t - A.lingerAfter) / A.lingerRamp);
+  return A.lingerRate + (A.lingerRateMax - A.lingerRate) * k;
+}
+
 /** Awareness change for one observer looking at one member this perception tick. */
 function seenDelta(
   sim: StopSim,
@@ -71,10 +85,14 @@ function seenDelta(
   civilian: boolean,
   dtP: number,
   base: number,
+  near = 0.5,
 ): number {
   const A = TUNING.awareness;
   let gain = m.rate * dtP + m.spike * chassisMult(m) + base * dtP;
   if (m.mode === 'shutdown') gain += TUNING.rates.carryUnit * dtP;
+  // Closer observers notice more (near = 0 at point blank, 1 at full range); trained eyes notice more.
+  gain *= A.nearMult + (A.farMult - A.nearMult) * Math.max(0, Math.min(1, near));
+  if (hostile && !sim.alert.on) gain *= A.guardMult;
   if (civilian && sim.cfg.region === 'piedmont') gain *= A.piedmontCivilianMult;
   if (sim.alert.on && hostile) {
     gain *= A.alertSightMult;
@@ -129,7 +147,16 @@ export function perceive(sim: StopSim, dtP: number): void {
       if (seen) {
         if (!n.obs.sympathizer) m.seen = true;
         if (m.fighting) a = A.alarmed;
-        else a += seenDelta(sim, m, n.hostile, civilian, dtP, 0);
+        else
+          a += seenDelta(
+            sim,
+            m,
+            n.hostile,
+            civilian,
+            dtP,
+            linger(n.obs, m, dtP),
+            Math.hypot(m.x - n.x, m.y - n.y) / r,
+          );
         if (n.hostile && sim.alert.on) {
           n.lastKnown = { x: m.x, y: m.y };
           if (a >= A.suspicious) {
@@ -178,7 +205,18 @@ export function perceive(sim: StopSim, dtP: number): void {
       const seen = inView(sim, c.x, c.y, c.facing, c.obs.coneDeg, c.obs.range * range, m.x, m.y);
       if (seen) {
         m.seen = true;
-        a = m.fighting ? A.alarmed : a + seenDelta(sim, m, false, false, dtP, 0);
+        a = m.fighting
+          ? A.alarmed
+          : a +
+            seenDelta(
+              sim,
+              m,
+              false,
+              false,
+              dtP,
+              linger(c.obs, m, dtP),
+              Math.hypot(m.x - c.x, m.y - c.y) / (c.obs.range * range),
+            );
       } else a -= A.decayUnseen * dtP;
       c.obs.awareness[m.id] = Math.max(0, Math.min(A.alarmed, a));
       if (c.obs.awareness[m.id]! >= A.alarmed) {

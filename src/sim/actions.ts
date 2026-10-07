@@ -815,6 +815,10 @@ export function updateMode(sim: StopSim, m: MemberActor, dt: number, held: boole
         break;
       }
       stepScan(s, dt);
+      const scanner = m.scanner >= 0 ? sim.npcs[m.scanner] : undefined;
+      const scannerGone = !scanner || !sim.isActiveNpc(scanner) || scanner.scanTarget !== m.idx;
+      // The scan resolves when it completes, or ends early if the scanner is gone or ALERT broke out.
+      if (s.done || scannerGone || sim.alert.on) resolveScan(sim, m, s.done && !sim.alert.on);
       break;
     }
     case 'factory':
@@ -836,6 +840,36 @@ export function updateMode(sim: StopSim, m: MemberActor, dt: number, held: boole
   ) {
     const k = (TUNING.integrity.glitchBelow - m.state.integrity) / TUNING.integrity.glitchBelow;
     if (sim.rng.chance(TUNING.integrity.glitchChanceMax * k * dt)) glitch(sim, m);
+  }
+}
+
+/**
+ * End a breathing scan (spec §11.3): a failed routine scan raises ALERT; June is human and always passes.
+ * `judge` is false when the scan was cut short (no verdict).
+ */
+export function resolveScan(sim: StopSim, m: MemberActor, judge: boolean): void {
+  const s = m.scan;
+  const scanner = m.scanner >= 0 ? sim.npcs[m.scanner] : undefined;
+  m.scan = null;
+  m.scanner = -1;
+  if (m.mode === 'scanned') setMode(m, 'free');
+  if (scanner && scanner.scanTarget === m.idx) {
+    scanner.scanTarget = -1;
+    scanner.stepT = 2;
+  }
+  if (!s || !judge) return;
+  const failed = m.state.kind === 'android' && s.meter >= TUNING.breathing.routineFailAt;
+  if (failed) {
+    if (scanner) scanner.obs.awareness[m.id] = TUNING.awareness.alarmed;
+    sim.raiseAlert({ x: m.x, y: m.y });
+  } else if (scanner) {
+    const lines = BARKS.filter((b) => b.context === 'recycler');
+    if (lines.length && scanner.barkCd <= 0) {
+      scanner.speech = sim.rng.pick(lines).text;
+      scanner.speechT = 2.2;
+      scanner.barkCd = 6;
+      sim.emit({ t: 'bark', actor: scanner.idx, npc: true, text: scanner.speech });
+    }
   }
 }
 

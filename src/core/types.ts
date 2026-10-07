@@ -220,6 +220,8 @@ export interface Observer {
   hearing: number;
   awareness: Partial<Record<MemberId, number>>;
   state: ObserverState;
+  /** Seconds this observer has spent watching each member (lingering, spec §1.2). */
+  watched?: Partial<Record<MemberId, number>>;
 }
 
 export type PerkId = 'spare-cells' | 'forged-papers' | 'field-kit' | 'network-contacts' | 'old-route';

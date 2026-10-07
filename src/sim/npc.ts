@@ -416,6 +416,12 @@ function respawns(sim: StopSim): void {
   }
 }
 
+/** Seconds between the clerk's smoke breaks (varies per clerk). */
+function smokeEvery(n: NpcActor): number {
+  const N = TUNING.npc;
+  return N.smokeEvery + ((n.lookSeed % (N.smokeJitter * 2 + 1)) - N.smokeJitter);
+}
+
 function clerk(sim: StopSim, n: NpcActor, dt: number): void {
   const post = point(sim, 'register');
   const smoke = point(sim, 'smoke');
@@ -433,7 +439,7 @@ function clerk(sim: StopSim, n: NpcActor, dt: number): void {
       idleVariety(sim, n, 'idle');
       n.stepT += dt;
       // A smoke break about every 60 s leaves the register and back office unwatched for ~15 s.
-      if (smoke && n.stepT > 60 + ((n.lookSeed % 31) - 15)) {
+      if (smoke && n.stepT > smokeEvery(n)) {
         n.step = 1;
         n.stepT = 0;
         goTo(sim, n, smoke);
@@ -453,7 +459,7 @@ function clerk(sim: StopSim, n: NpcActor, dt: number): void {
       else n.facing = Math.PI / 2;
       setActivity(n, 'smoke');
       n.stepT += dt;
-      if (n.stepT > 15) {
+      if (n.stepT > TUNING.npc.smokeSeconds) {
         n.step = 0;
         n.stepT = 0;
         if (post) goTo(sim, n, post);
@@ -478,8 +484,8 @@ function guard(sim: StopSim, n: NpcActor, dt: number): void {
         n.step = 1;
         n.stepT = sim.rng.range(2, 5);
         // Sometimes he stops to check his phone: his cone is off for 6–10 s.
-        if (sim.rng.chance(0.22)) {
-          n.stepT = sim.rng.range(6, 10);
+        if (sim.rng.chance(TUNING.npc.guardPhoneChance)) {
+          n.stepT = sim.rng.range(TUNING.npc.guardPhoneSeconds[0], TUNING.npc.guardPhoneSeconds[1]);
           n.blindT = n.stepT;
           n.activity = 'phone';
           n.activityT = 0;

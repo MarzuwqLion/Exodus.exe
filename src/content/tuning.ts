@@ -83,6 +83,16 @@ export const TUNING = {
     noiseLookSeconds: 1.6,
     /** Camera/drone searchlight base exposure rate on anyone inside it. */
     droneBeamRate: 12,
+    /** Observers notice more up close: gains scale from this at point blank to the far value at full range. */
+    nearMult: 1.35,
+    farMult: 0.6,
+    /** Lingering: after this many seconds of watching someone, even normal behavior draws attention. */
+    lingerAfter: 20,
+    lingerRate: 3,
+    lingerRateMax: 5,
+    lingerRamp: 60,
+    /** Trained eyes: guards and Recyclers gain awareness faster. */
+    guardMult: 1.5,
   },
 
   rates: {
@@ -91,6 +101,8 @@ export const TUNING = {
     fight: 80,
     searchPrivate: 18,
     hack: 10,
+    /** Plugged in on a spoofed session (Papers or a hack): androids have no real ID (spec §8.2). */
+    spoofedCharging: 11,
     staffZone: 8,
     carryUnit: 40,
     stillnessStartSeconds: 4,
@@ -123,6 +135,17 @@ export const TUNING = {
     cameraSweepSeconds: 7,
     /** Humans glance at a Curious target this often. */
     glanceEvery: 3,
+  },
+
+  npc: {
+    /** The clerk smokes about every 60 s, leaving the register and back office unwatched for ~15 s. */
+    smokeEvery: 60,
+    smokeJitter: 15,
+    smokeSeconds: 15,
+    cookBreakEvery: 70,
+    breakSeconds: 12,
+    guardPhoneChance: 0.22,
+    guardPhoneSeconds: [6, 10] as [number, number],
   },
 
   weather: {
@@ -160,9 +183,9 @@ export const TUNING = {
   },
 
   patrol: {
-    drone1: 90,
-    sweep: 150,
-    drone2: 210,
+    drone1: 125,
+    sweep: 185,
+    drone2: 245,
     heatSpeedPerLevel: 0.15,
     day7Mult: 1.1,
     day11Mult: 1.2,
@@ -285,14 +308,14 @@ export const TUNING = {
 
   loot: {
     shelf: { rations: [0, 1], parts: [0, 1], partsChance: 0.25 },
-    locker: { parts: [1, 2], skinChance: 0.3, papersChance: 0.18 },
-    register: { papersChance: 0.35, cells: [4, 10] },
+    locker: { parts: [1, 2], skinChance: 0.4, papersChance: 0.18 },
+    register: { papersChance: 0.35, cells: [3, 7] },
     bench: { parts: [1, 2] },
-    wallet: { papersChance: 0.5, cells: [2, 6] },
+    wallet: { papersChance: 0.5, cells: [2, 5] },
     kitchen: { rations: [1, 2] },
     office: { papersChance: 0.3, parts: [0, 1] },
     partsAisle: { parts: [1, 2], skinChance: 0.35 },
-    garage: { parts: [1, 2], cells: [6, 14] },
+    garage: { parts: [1, 2], cells: [4, 9] },
     store: { rations: [1, 2], papersChance: 0.1 },
     supplyBag: { cells: [20, 30], parts: [1, 2], papers: [1, 1] },
     cellsCacheBonus: [12, 20] as [number, number],

@@ -192,6 +192,8 @@ export class StopSim {
     lost: [] as { member: MemberId; how: string }[],
     resetsResolved: [] as AndroidId[],
     juneArrested: false,
+    /** Everything found or gifted this stop (positive gains only). */
+    found: { cells: 0, carBattery: 0, parts: 0, skinPatches: 0, papers: 0, rations: 0 } as Resources,
   };
   /** Per-tick intents (read by subsystems). */
   readonly intents: Record<Slot, PlayerIntent | null> = { 0: null, 1: null };
@@ -810,6 +812,7 @@ export class StopSim {
       const n = res[k] ?? 0;
       if (!n) continue;
       this.resources[k] += n;
+      if (n > 0) this.stats.found[k] += n;
       if (k === 'cells') this.stats.cellsGathered += n;
     }
     if (text) this.emit({ t: 'pickup', text, x, y });

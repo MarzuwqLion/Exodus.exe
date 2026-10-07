@@ -217,16 +217,7 @@ function spawnRecycler(sim: StopSim, role: 'recycler' | 'gunner', at: Point): Np
 function sweepRecycler(sim: StopSim, r: NpcActor, dt: number): void {
   const S = TUNING.patrol;
   const sw = sim.sweep;
-  // Leaving after the stay.
-  if (sw.t > S.sweepStaySeconds || sw.leaving) {
-    sw.leaving = true;
-    const v = vanPoint(sim);
-    if (r.path.length === 0 || r.pathI >= r.path.length) goTo(sim, r, v);
-    if (walk(sim, r, dt) || dist(r, v) < 1) r.mode = 'gone';
-    setAct(r, 'walk');
-    return;
-  }
-  // Scanning a member in progress.
+  // Scanning a member in progress (the member's side resolves it; see resolveScan).
   if (r.scanTarget >= 0) {
     const m = sim.members[r.scanTarget];
     steer(r, 0, 0, dt);
@@ -237,9 +228,18 @@ function sweepRecycler(sim: StopSim, r: NpcActor, dt: number): void {
       return;
     }
     r.facing = angleOf(m.x - r.x, m.y - r.y);
-    if (m.scan.done) finishScan(sim, r, m);
     return;
   }
+  // Leaving after the stay.
+  if (sw.t > S.sweepStaySeconds || sw.leaving) {
+    sw.leaving = true;
+    const v = vanPoint(sim);
+    if (r.path.length === 0 || r.pathI >= r.path.length) goTo(sim, r, v);
+    if (walk(sim, r, dt) || dist(r, v) < 1) r.mode = 'gone';
+    setAct(r, 'walk');
+    return;
+  }
+
   r.stepT -= dt;
   if (r.stepT > 0 && r.path.length > 0 && r.pathI < r.path.length) {
     walk(sim, r, dt, 1.2);
@@ -302,25 +302,6 @@ export function beginScan(sim: StopSim, r: NpcActor, m: MemberActor, routine: bo
   if (m.state.kind === 'android')
     m.state.integrity = Math.max(0, m.state.integrity + TUNING.integrity.scanned);
   void routine;
-}
-
-function finishScan(sim: StopSim, r: NpcActor, m: MemberActor): void {
-  const s = m.scan;
-  r.scanTarget = -1;
-  r.stepT = 2;
-  if (!s) return;
-  // June is human: the scan finds nothing. AI members breathe well most of the time.
-  let failed = s.meter >= TUNING.breathing.routineFailAt;
-  if (m.state.kind === 'human') failed = false;
-  m.scan = null;
-  m.scanner = -1;
-  setMode(m, 'free');
-  if (failed) {
-    r.obs.awareness[m.id] = TUNING.awareness.alarmed;
-    sim.raiseAlert({ x: m.x, y: m.y });
-  } else {
-    bark(sim, r, 'recycler');
-  }
 }
 
 /** AI members being scanned breathe on their own (the party AI's best effort). */

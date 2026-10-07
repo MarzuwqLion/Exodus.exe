@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M2.1 Full humanoid rig
+**Current task:** M4.1 Diner
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -26,29 +26,29 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## M2 — Characters and co-op input
 
-- [ ] M2.1 Full humanoid rig (instanced parts), variants, party silhouettes, exposed chassis
-- [ ] M2.2 Procedural animation library (12 fps poses), 8-direction facing, glitch effect
-- [ ] M2.3 Two-player join and drop, character assignment
-- [ ] M2.4 Shared camera with zoom and leash
-- [ ] M2.5 Glyphs, rumble, disconnect handling
-- [ ] M2.6 Exit: simulated two-player input test passes; screenshots show both players framed
+- [x] M2.1 Full humanoid rig (instanced parts), variants, party silhouettes, exposed chassis
+- [x] M2.2 Procedural animation library (12 fps poses), 8-direction facing, glitch effect
+- [x] M2.3 Two-player join and drop, character assignment
+- [x] M2.4 Shared camera with zoom and leash
+- [x] M2.5 Glyphs, rumble, disconnect handling
+- [x] M2.6 Exit: simulated two-player input test passes; screenshots show both players framed
 
 ## M3 — The depot loop
 
-- [ ] M3.1 Collision grid, layout format and validation, two depot layouts
-- [ ] M3.2 Stop simulation core: actors, movement, collision, A* pathfinding
-- [ ] M3.3 NPC routines and distraction windows
-- [ ] M3.4 Perception, awareness, states, sympathizers
-- [ ] M3.5 Suspicious behaviors (sprint, dash, robotic movement, stillness, zones, needs)
-- [ ] M3.6 Blend actions, radial, co-op Chat
-- [ ] M3.7 Charging with Papers or hack; loot containers and searching
-- [ ] M3.8 Patrol clock, drones, routine sweep with breathing scan, ALERT and Searching
-- [ ] M3.9 Recyclers, light combat, dash, shutdown, revive, carry, loss
-- [ ] M3.10 Leaving by car and the stop outcome
-- [ ] M3.11 Party AI
-- [ ] M3.12 Stop scene rendering (layout to 3D), NPC visuals, awareness icons
-- [ ] M3.13 HUD (panels, bars, eye, prompts, patrol pips, pickups) and suspicion audio
-- [ ] M3.14 Bot framework and depot bots; exit: every depot band passes solo and two-player
+- [x] M3.1 Collision grid, layout format and validation, two depot layouts
+- [x] M3.2 Stop simulation core: actors, movement, collision, A* pathfinding
+- [x] M3.3 NPC routines and distraction windows
+- [x] M3.4 Perception, awareness, states, sympathizers
+- [x] M3.5 Suspicious behaviors (sprint, dash, robotic movement, stillness, zones, needs)
+- [x] M3.6 Blend actions, radial, co-op Chat
+- [x] M3.7 Charging with Papers or hack; loot containers and searching
+- [x] M3.8 Patrol clock, drones, routine sweep with breathing scan, ALERT and Searching
+- [x] M3.9 Recyclers, light combat, dash, shutdown, revive, carry, loss
+- [x] M3.10 Leaving by car and the stop outcome
+- [x] M3.11 Party AI
+- [x] M3.12 Stop scene rendering (layout to 3D), NPC visuals, awareness icons
+- [x] M3.13 HUD (panels, bars, eye, prompts, patrol pips, pickups) and suspicion audio
+- [x] M3.14 Bot framework and depot bots; exit: every depot band passes solo and two-player
 
 ## M4 — The other stops
 
@@ -105,4 +105,5 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## Known issues
 
-- none yet
+- Stop visuals are first-pass (simple furniture, dark lot); the modeled props land in the M7 art pass.
+- Character portraits in the HUD are 2D placeholders until the 3D head render (M7).
