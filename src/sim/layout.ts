@@ -212,7 +212,6 @@ function floorFor(rows: readonly string[], x: number, y: number): number {
 function autoKind(ch: string, staff: boolean, layoutKind: LayoutKind): ContainerKind | null {
   switch (ch) {
     case 'S':
-      if (layoutKind === 'gas') return 'partsAisle';
       return staff ? 'kitchen' : layoutKind === 'depot' ? 'shelf' : 'store';
     case 'L':
       return 'locker';

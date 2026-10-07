@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M4.1 Diner
+**Current task:** M4.3 Stations
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -52,8 +52,8 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## M4 — The other stops
 
-- [ ] M4.1 Diner (two layouts): ordering, coffee, booths, TV rumors, waitress expectations
-- [ ] M4.2 Gas Station (two layouts): car charging, rotating camera, garage
+- [x] M4.1 Diner (two layouts): ordering, coffee, booths, TV rumors, waitress expectations
+- [x] M4.2 Gas Station (two layouts): car charging, rotating camera, garage
 - [ ] M4.3 Stations (three interiors), keepers, benefits, trades, compromised Stations
 - [ ] M4.4 Every ability and tell
 - [ ] M4.5 June's systems (legal ID, conductor, Patch, hunger, Trust)
@@ -105,5 +105,8 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## Known issues
 
+- Bot bands are verified for the depot, diner, and gas station (`npm run test:bots`). The tightest margins on the
+  test seeds are diner greedy 2P and gas greedy 1P at 41% (floor 40%); `npx tsx tools/bands.ts --n 400` puts the
+  true means 4 or more points inside every band.
 - Stop visuals are first-pass (simple furniture, dark lot); the modeled props land in the M7 art pass.
 - Character portraits in the HUD are 2D placeholders until the 3D head render (M7).

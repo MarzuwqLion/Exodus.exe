@@ -880,8 +880,12 @@ export function scanPress(m: MemberActor): void {
 
 function finishBlend(sim: StopSim, m: MemberActor): void {
   if (m.blend === 'order') {
-    m.ordered = true;
-    m.hasCoffee = true;
+    // One order covers the table: everyone in the party gets coffee.
+    for (const o of sim.members) {
+      if (!sim.present(o)) continue;
+      o.ordered = true;
+      o.hasCoffee = true;
+    }
     sim.emit({ t: 'pickup', text: 'Coffee', x: m.x, y: m.y });
     sim.emit({ t: 'sfx', cue: 'coffee', x: m.x, y: m.y });
   } else if (m.blend === 'tv') {

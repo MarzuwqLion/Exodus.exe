@@ -67,7 +67,8 @@ export function updateBehaviors(sim: StopSim, dt: number): void {
       if (c?.private) rate += R.searchPrivate;
     }
     if (m.mode === 'hack') rate += R.hack;
-    if (m.plug === 'member') rate += R.spoofedCharging;
+    // A spoofed charging session (yours or the car's) is suspicious while watched (spec §8.2, §10.4).
+    if (m.plug) rate += R.spoofedCharging;
     if (sim.grid.flagAt(m.x, m.y, F.STAFF)) rate += R.staffZone;
     if (m.mode === 'carry') rate += R.carryUnit;
 
@@ -114,8 +115,12 @@ export function updateBehaviors(sim: StopSim, dt: number): void {
 
       // Skipping human needs.
       if (sim.kind === 'diner' && sim.grid.flagAt(m.x, m.y, F.INTERIOR)) {
+        const before = m.dinerT;
         m.dinerT += dt;
-        if (m.dinerT > R.dinerOrderGraceSeconds && !m.ordered) rate += R.skippingNeeds;
+        if (m.dinerT > R.dinerOrderGraceSeconds && !m.ordered) {
+          rate += R.skippingNeeds;
+          if (before <= R.dinerOrderGraceSeconds) waitressNotices(sim, m);
+        }
       }
       if (m.mode === 'blend' && m.blend === 'sit' && sim.kind === 'diner' && !m.hasCoffee)
         rate += R.skippingNeeds;
@@ -134,7 +139,8 @@ export function updateBehaviors(sim: StopSim, dt: number): void {
           const d = Math.hypot(n.x - m.x, n.y - m.y);
           if (d <= T.vesperSnapRadius && !m.nearHumans.has(n.idx)) {
             m.nearHumans.add(n.idx);
-            if (!performing) {
+            // The tell is the player's to manage; the party AI keeps her composed (spec §10.7).
+            if (!performing && m.controller !== null) {
               m.spike += T.vesperSnapAwareness;
               m.headSnapT = 0.35;
               m.facing = Math.atan2(n.y - m.y, n.x - m.x);
@@ -143,18 +149,36 @@ export function updateBehaviors(sim: StopSim, dt: number): void {
         }
       }
 
-      // Brick's tell: heavy footsteps carry.
-      if (m.id === 'brick' && sp > 0.4 && (m.mode === 'free' || m.mode === 'carry')) {
+      // Footsteps: Brick's heavy steps carry (his tell), and anyone's running steps can be heard close by.
+      const running = m.sprinting && sp > brisk * 1.1;
+      if ((m.id === 'brick' || running) && sp > 0.4 && (m.mode === 'free' || m.mode === 'carry')) {
         m.stepT += dt * (sp / 1.3);
         if (m.stepT >= 0.5) {
           m.stepT = 0;
-          const sprint = m.sprinting;
-          sim.noise(m.x, m.y, sprint ? T.brickSprintHearing : T.brickWalkHearing, sprint ? 1 : 0.25, m.idx);
+          if (m.id === 'brick')
+            sim.noise(
+              m.x,
+              m.y,
+              running ? T.brickSprintHearing : T.brickWalkHearing,
+              running ? 1 : 0.25,
+              m.idx,
+            );
+          else sim.noise(m.x, m.y, T.sprintHearing, T.sprintNoise, m.idx);
         }
       }
     }
     if (m.headSnapT > 0) m.headSnapT -= dt;
     m.rate = rate * chassisMult(m);
+  }
+}
+
+/** 20 s inside a diner without ordering: the waitress gets Curious about them (spec §10.3). */
+function waitressNotices(sim: StopSim, m: MemberActor): void {
+  for (const n of sim.npcs) {
+    if (n.role !== 'waitress' || !sim.isActiveNpc(n)) continue;
+    n.obs.awareness[m.id] = Math.max(n.obs.awareness[m.id] ?? 0, TUNING.awareness.curious);
+    n.lookAt = { x: m.x, y: m.y };
+    n.lookT = TUNING.awareness.noiseLookSeconds;
   }
 }
 

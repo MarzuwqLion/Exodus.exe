@@ -300,10 +300,12 @@ export class StopSim {
     const f = this.patrolFactor();
     const o = this.cfg.patrolTimes ?? {};
     const never = this.cfg.noPatrol || this.kind === 'station' || !!this.cfg.port || !!this.cfg.bust;
+    // The clock is approximate ("~90 s"): each patrol comes a little early or late.
+    const at = (base: number): number => base / f + this.rng.range(-p.jitter, p.jitter);
     return {
-      drone1: never ? Infinity : (o.drone1 ?? p.drone1 / f),
-      sweep: never ? Infinity : (o.sweep ?? p.sweep / f),
-      drone2: never ? Infinity : (o.drone2 ?? p.drone2 / f),
+      drone1: never ? Infinity : (o.drone1 ?? at(p.drone1)),
+      sweep: never ? Infinity : (o.sweep ?? at(p.sweep)),
+      drone2: never ? Infinity : (o.drone2 ?? at(p.drone2)),
       fired: { drone1: false, sweep: false, drone2: false },
     };
   }

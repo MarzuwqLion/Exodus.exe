@@ -41,3 +41,22 @@ One line per call: what was decided and why. Newest at the bottom of each sectio
 - During ALERT, hostiles who see a party member gain an extra +60/s (+18/s while Searching) on top of ×3 gains, so Blending doesn't hide you from people already hunting you.
 - Guards fight with batons like Recyclers (the spec only describes Recycler combat); civilians never fight.
 - An active member outside the exit zone when the car leaves is left behind (lost; June is arrested). The car waits 10 s and the HUD counts down.
+
+## M4 — The other stops
+
+- Bot bands apply in every stop type: exposure (cautious 10–30%, greedy 40–65%, reckless ≥ 90%) and the cautious visit length (120–200 s). The Cells bands stay the depot's, since charging is where Cells come from (§10.9). Band attempts cycle every layout through all four regions.
+- Diner, Gas Station, Station, and checkpoint layouts are drawn with a small grid builder (rooms, lines, text), not hand-counted rows.
+- The car charges on the depot's rules: the session is spoofed (+11/s while watched), and pumping gas (a Blend) covers it.
+- The Gas Station's rotating camera sits on the canopy post by the EV charger (140° sweep). Its first drone circles the forecourt, and the second sweeps back and forth along the pumps.
+- Diners park the car at the far edge of the lot (§10.1 puts the exit zone at the lot edge). Their drone patrols back and forth along the far side of the lot, sweeping the lot and the front windows. With the car at the door, a diner visit was nearly risk-free.
+- A layout can give the second drone its own beat (route `drone2`); otherwise it flies the first one's the other way round. Drones come in over a random point of their loop.
+- The patrol clock is approximate: each patrol comes up to 8 s early or late (seeded), so a stop's danger doesn't hinge on one exact timing.
+- Lingering ramps to +10/s (was +5/s, then +7/s). Blend fatigue: after 40 s of watching someone, an observer's Blend drop fades over 200 s to 45%.
+- Drone searchlights expose anyone inside at +36/s (×1.5 for trained eyes), so a sweep catches anyone it holds for about two seconds.
+- Anyone's running footsteps carry 4 m (Brick's tell carries further). Sprinting through a kitchen behind the cook's back is heard.
+- After 20 s inside a diner without ordering, the waitress gets Curious (awareness 30) on top of the skipping-needs rate (§10.3).
+- One coffee order covers the table: everyone present gets coffee.
+- Party AI: waits just outside a staff room instead of trailing its player in. When left behind, it catches up at an easy walk (60% of brisk) even if its player has stopped; it used to crawl at 0.7 m/s and get caught in the open. AI Brick avoids stools. AI Vesper never snaps her head, since the tell is the player's to manage.
+- Bots model what a player sees. They notice the eye glyph (Suspicion over 30) after 0.5–1.2 s, and a cautious bot backs off a private search once it does (it used to abort at a hidden 25). They watch staff, guards, Recyclers, and cameras, not every customer's gaze.
+- Bots loiter like customers when idle (browse near the store, or take a booth with coffee). Two-player bots Chat when side by side. Greedy bots stay until 40 s after the second drone and retry a container they backed off from after 25 s. Bots wait at the car for the party (the AI within 6 m, the other player within 3 m) for up to 45 s.
+- Two-player bots split the work: at depots and gas stations Brick searches while Wren charges. At diners Wren searches while Brick sits, because his footsteps make him a poor sneak in a crowded room.

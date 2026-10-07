@@ -86,6 +86,7 @@ function seenDelta(
   dtP: number,
   base: number,
   near = 0.5,
+  watchedT = 0,
 ): number {
   const A = TUNING.awareness;
   let gain = m.rate * dtP + m.spike * chassisMult(m) + base * dtP;
@@ -99,8 +100,13 @@ function seenDelta(
     // Hunting: hostiles on alert recognize fugitives they can see; Searching is calmer.
     gain += (sim.alert.searching ? 18 : 60) * dtP;
   }
-  const drop = blendDrop(sim, m);
-  if (drop > 0) return gain - drop * dtP;
+  let drop = blendDrop(sim, m);
+  if (drop > 0) {
+    // Blend fatigue: an audience that has watched you a long time is harder to convince.
+    const over = Math.max(0, watchedT - A.blendFatigueAfter) / A.blendFatigueSpan;
+    drop *= Math.max(A.blendFatigueFloor, 1 - over);
+    return gain - drop * dtP;
+  }
   if (gain <= 0) return -A.decaySeenNeutral * dtP;
   return gain;
 }
@@ -147,16 +153,11 @@ export function perceive(sim: StopSim, dtP: number): void {
       if (seen) {
         if (!n.obs.sympathizer) m.seen = true;
         if (m.fighting) a = A.alarmed;
-        else
-          a += seenDelta(
-            sim,
-            m,
-            n.hostile,
-            civilian,
-            dtP,
-            linger(n.obs, m, dtP),
-            Math.hypot(m.x - n.x, m.y - n.y) / r,
-          );
+        else {
+          const lr = linger(n.obs, m, dtP);
+          const near = Math.hypot(m.x - n.x, m.y - n.y) / r;
+          a += seenDelta(sim, m, n.hostile, civilian, dtP, lr, near, n.obs.watched?.[m.id] ?? 0);
+        }
         if (n.hostile && sim.alert.on) {
           n.lastKnown = { x: m.x, y: m.y };
           if (a >= A.suspicious) {
@@ -278,8 +279,9 @@ export function perceive(sim: StopSim, dtP: number): void {
 }
 
 function nearWindow(sim: StopSim, x: number, y: number): boolean {
-  for (let dy = -2; dy <= 2; dy++) {
-    for (let dx = -2; dx <= 2; dx++)
+  const r = TUNING.observers.droneWindowReach;
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++)
       if (sim.grid.charAt(Math.floor(x) + dx, Math.floor(y) + dy) === 'W') return true;
   }
   return false;

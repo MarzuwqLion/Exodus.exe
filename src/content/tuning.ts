@@ -82,15 +82,19 @@ export const TUNING = {
     noiseAwareness: 6,
     noiseLookSeconds: 1.6,
     /** Camera/drone searchlight base exposure rate on anyone inside it. */
-    droneBeamRate: 12,
+    droneBeamRate: 36,
     /** Observers notice more up close: gains scale from this at point blank to the far value at full range. */
     nearMult: 1.35,
     farMult: 0.6,
     /** Lingering: after this many seconds of watching someone, even normal behavior draws attention. */
     lingerAfter: 20,
     lingerRate: 3,
-    lingerRateMax: 5,
-    lingerRamp: 60,
+    lingerRateMax: 10,
+    lingerRamp: 90,
+    /** The same performance wears thin: Blends work less on someone who has watched you this long. */
+    blendFatigueAfter: 40,
+    blendFatigueSpan: 200,
+    blendFatigueFloor: 0.45,
     /** Trained eyes: guards and Recyclers gain awareness faster. */
     guardMult: 1.5,
   },
@@ -133,6 +137,8 @@ export const TUNING = {
     dockSympathizerChance: 0.25,
     cameraSweepDeg: 70,
     cameraSweepSeconds: 7,
+    /** How far inside (tiles from a window) a drone's searchlight reaches. */
+    droneWindowReach: 2,
     /** Humans glance at a Curious target this often. */
     glanceEvery: 3,
   },
@@ -186,6 +192,8 @@ export const TUNING = {
     drone1: 125,
     sweep: 185,
     drone2: 245,
+    /** Each patrol arrives up to this many seconds early or late. */
+    jitter: 8,
     heatSpeedPerLevel: 0.15,
     day7Mult: 1.1,
     day11Mult: 1.2,
@@ -279,6 +287,9 @@ export const TUNING = {
     wrenMult: 2,
     brickWalkHearing: 3,
     brickSprintHearing: 9,
+    /** Anyone's running footsteps carry this far (Brick's carry further, above). */
+    sprintHearing: 4,
+    sprintNoise: 0.25,
     brickStoolAwareness: 25,
     vesperSnapRadius: 5,
     vesperSnapAwareness: 10,

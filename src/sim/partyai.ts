@@ -7,7 +7,7 @@
 import { TUNING } from '../content/tuning';
 import { angleOf, dist } from '../core/math';
 import { blendsFor, findInteraction, startAttack, startBlend, startInteraction, updateMode } from './actions';
-import { LOOPING } from './blend';
+import { LOOPING, nearestSeat } from './blend';
 import { F, type Point } from './grid';
 import { followPath, steer } from './movement';
 import type { StopSim } from './stop';
@@ -75,8 +75,16 @@ function walkPath(sim: StopSim, m: MemberActor, speed: number, dt: number): bool
 function idleBlend(sim: StopSim, m: MemberActor): void {
   const list = blendsFor(sim, m);
   // Prefer something that fits the place; never order (the AI doesn't spend coffee money on its own).
+  const seat = nearestSeat(sim.grid, m.x, m.y);
   const fitting = list.filter(
-    (b) => b !== 'order' && b !== 'phone' && b !== 'stretch' && b !== 'fidget' && b !== 'pump',
+    (b) =>
+      b !== 'order' &&
+      b !== 'phone' &&
+      b !== 'stretch' &&
+      b !== 'fidget' &&
+      b !== 'pump' &&
+      // Brick breaks stools and chairs; the AI knows better.
+      !(b === 'sit' && m.id === 'brick' && seat?.glyph === 'c'),
   );
   const generic: BlendKind[] = ['phone', 'stretch', 'fidget', 'phone'];
   const k =
@@ -208,12 +216,15 @@ function aiControl(sim: StopSim, m: MemberActor, dt: number): void {
     x: leader.x - Math.cos(lf) * back + Math.cos(lf + Math.PI / 2) * side,
     y: leader.y - Math.sin(lf) * back + Math.sin(lf + Math.PI / 2) * side,
   };
-  const target = sim.grid.walkableAt(want.x, want.y)
+  let target = sim.grid.walkableAt(want.x, want.y)
     ? want
     : (sim.grid.nearestWalkable(want.x, want.y) ?? { x: leader.x, y: leader.y });
+  // Never trail a player into a staff-only room: wait just outside the way out instead.
+  const waitOutside = sim.grid.flagAt(leader.x, leader.y, F.STAFF) ? staffWaitSpot(sim, leader, side) : null;
+  if (waitOutside) target = waitOutside;
   const d = dist(m, target);
   const leaderSpeed = Math.hypot(leader.vx, leader.vy);
-  if (leaderSpeed > 0.3 || d > 2.6) {
+  if (waitOutside ? d > 0.6 : leaderSpeed > 0.3 || d > 2.6) {
     if (
       m.path.length === 0 ||
       m.pathI >= m.path.length ||
@@ -224,9 +235,14 @@ function aiControl(sim: StopSim, m: MemberActor, dt: number): void {
       m.aiT = 0.6;
     }
     const sprint = leader.sprinting && d > 2;
+    // Match the player's pace; when left behind, catch up at an easy walk even if the player has stopped.
+    const catchUp = d > 3.5 ? TUNING.movement.briskSpeed * 0.6 : 0;
     let speed = sprint
       ? TUNING.movement.sprintSpeed
-      : Math.min(TUNING.movement.briskSpeed * 0.86, leaderSpeed * 1.05 + (d > 3.5 ? 0.7 : 0.15));
+      : Math.min(
+          TUNING.movement.briskSpeed * 0.86,
+          Math.max(catchUp, leaderSpeed * 1.05 + (d > 3.5 ? 0.7 : 0.15)),
+        );
     if (m.lowPower) speed = Math.min(speed, TUNING.movement.briskSpeed * TUNING.movement.lowPowerSpeedMult);
     m.sprinting = sprint && !m.lowPower;
     if (m.mode === 'free' && m.carrying >= 0) speed *= m.id === 'brick' ? 1 : TUNING.movement.carrySpeedMult;
@@ -237,6 +253,21 @@ function aiControl(sim: StopSim, m: MemberActor, dt: number): void {
   // Idle: face roughly the way the leader faces, and Blend before stillness becomes suspicious.
   m.facing += Math.sin(angleOf(Math.cos(leader.facing), Math.sin(leader.facing)) - m.facing) * dt;
   if (m.stillT > 0.8 || m.suspicion > 20) idleBlend(sim, m);
+}
+
+/** Where a follower waits while its player is in a staff-only room: beside the nearest way out. */
+function staffWaitSpot(sim: StopSim, leader: MemberActor, side: number): Point | null {
+  const g = sim.grid;
+  const out = g.nearestWithout(leader.x, leader.y, F.STAFF);
+  if (!out) return null;
+  for (const p of [
+    { x: out.x + side, y: out.y },
+    { x: out.x, y: out.y + Math.abs(side) },
+    { x: out.x, y: out.y - Math.abs(side) },
+  ]) {
+    if (g.walkableAt(p.x, p.y) && !g.flagAt(p.x, p.y, F.STAFF) && g.los(out.x, out.y, p.x, p.y)) return p;
+  }
+  return out;
 }
 
 /** A factory-reset unit walks toward the nearest human to turn itself in (spec §12.6). */

@@ -26,6 +26,13 @@ export interface Point {
   y: number;
 }
 
+const NB4: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
 export class Grid {
   readonly w: number;
   readonly h: number;
@@ -33,6 +40,7 @@ export class Grid {
   readonly chars: string[];
   /** Dynamic blockers (Brick's heaved objects) layered over the static flags. */
   readonly dynBlock: Uint8Array;
+  private readonly withoutCache = new Map<number, Point | null>();
 
   constructor(rows: readonly string[], flagsOf: (ch: string, x: number, y: number) => number) {
     this.h = rows.length;
@@ -136,6 +144,44 @@ export class Grid {
       }
     }
     return true;
+  }
+
+  /**
+   * The closest walkable tile by walking distance that lacks `flag` (the way out of a staff area, say), or
+   * null within `maxSteps`. Cached per start tile: flags never change after parsing.
+   */
+  nearestWithout(x: number, y: number, flag: number, maxSteps = 40): Point | null {
+    const sx = Math.floor(x);
+    const sy = Math.floor(y);
+    if (!this.inBounds(sx, sy)) return null;
+    const key = this.idx(sx, sy) * 1024 + flag;
+    const hit = this.withoutCache.get(key);
+    if (hit !== undefined) return hit;
+    let found: Point | null = null;
+    if (!this.has(sx, sy, flag)) found = { x: sx + 0.5, y: sy + 0.5 };
+    const seen = new Uint8Array(this.w * this.h);
+    let frontier = [this.idx(sx, sy)];
+    seen[frontier[0]] = 1;
+    for (let step = 0; !found && step < maxSteps && frontier.length > 0; step++) {
+      const next: number[] = [];
+      for (const cur of frontier) {
+        const cx = cur % this.w;
+        const cy = Math.floor(cur / this.w);
+        for (const [dx, dy] of NB4) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (!this.inBounds(nx, ny) || !(this.flags[this.idx(nx, ny)] & F.WALK)) continue;
+          const ni = this.idx(nx, ny);
+          if (seen[ni]) continue;
+          seen[ni] = 1;
+          if (!found && !this.has(nx, ny, flag)) found = { x: nx + 0.5, y: ny + 0.5 };
+          next.push(ni);
+        }
+      }
+      frontier = next;
+    }
+    this.withoutCache.set(key, found);
+    return found;
   }
 
   /** Nearest walkable tile center to a point (spiral search). */

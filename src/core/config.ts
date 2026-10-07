@@ -22,6 +22,7 @@ export const SCENE_NAMES = [
   // QA-only scenes
   'street',
   'lot',
+  'compromised',
 ] as const;
 export type SceneName = (typeof SCENE_NAMES)[number];
 

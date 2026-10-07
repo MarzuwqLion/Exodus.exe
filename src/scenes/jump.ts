@@ -2,8 +2,7 @@
  * Scene jumps (spec §17.6: `?scene=depot` etc.): build a playable configuration straight from URL parameters
  * (seed, region, weather, players, heat, day, variant, skin, integrity, alert) without a run.
  */
-import { DEPOT_A, DEPOT_B } from '../content/layouts/depot';
-import { TEST_LOT } from '../content/layouts/test';
+import { STOP_LAYOUTS } from '../content/layouts';
 import type { LaunchConfig } from '../core/config';
 import type { MemberId, Region, Slot, Weather } from '../core/types';
 import type { Game } from '../game';
@@ -18,9 +17,14 @@ export const REGION_WEATHER: Record<Region, Weather[]> = {
   lowcountry: ['heavyrain', 'storm', 'humid'],
 };
 
-export const LAYOUTS: Record<string, LayoutDef[]> = {
-  depot: [DEPOT_A, DEPOT_B],
-  lot: [TEST_LOT],
+export const LAYOUTS: Record<string, readonly LayoutDef[]> = {
+  depot: STOP_LAYOUTS.depot,
+  diner: STOP_LAYOUTS.diner,
+  gas: STOP_LAYOUTS.gas,
+  station: STOP_LAYOUTS.station,
+  compromised: STOP_LAYOUTS.compromised,
+  checkpoint: STOP_LAYOUTS.checkpoint,
+  lot: STOP_LAYOUTS.test,
 };
 
 /** Join the requested number of players for QA and scene jumps (keyboard layouts). */
@@ -52,6 +56,7 @@ export function jumpStopConfig(game: Game, kind: string, c: LaunchConfig): StopC
     party,
     control,
     resources: startingResources(),
-    startAlert: c.alert,
+    startAlert: c.alert || kind === 'checkpoint',
+    bust: kind === 'checkpoint',
   };
 }

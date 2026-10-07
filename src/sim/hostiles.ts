@@ -62,12 +62,17 @@ function updateCameras(sim: StopSim): void {
 // Drones
 // -------------------------------------------------------------------------------------------------
 
-/** A loop over the outdoor lot and past the windows, from the layout or generated. */
+/**
+ * A loop over the outdoor lot and past the windows, from the layout or generated. The second drone can fly
+ * its own beat (route `drone2`); otherwise it flies the first one's the other way round.
+ */
 function droneRoute(sim: StopSim, offset: number): Point[] {
-  const names = sim.cfg.layout.routes?.drone;
+  const routes = sim.cfg.layout.routes;
+  const own = offset > 0 ? routes?.[`drone${offset + 1}`] : undefined;
+  const names = own ?? routes?.drone;
   if (names && names.length > 0) {
     const pts = names.map((n) => sim.layout.waypoints.get(n)).filter((p): p is Point => !!p);
-    if (pts.length > 1) return offset % 2 === 0 ? pts : [...pts].reverse();
+    if (pts.length > 1) return own || offset % 2 === 0 ? pts : [...pts].reverse();
   }
   const g = sim.grid;
   let x0 = g.w;
@@ -95,7 +100,10 @@ function droneRoute(sim: StopSim, offset: number): Point[] {
 }
 
 export function spawnDrone(sim: StopSim): DroneActor {
-  const route = droneRoute(sim, sim.drones.length);
+  // Drones come in over a random point of their loop, so a patrol's timing can't be learned by heart.
+  const loop = droneRoute(sim, sim.drones.length);
+  const k = sim.rng.int(0, loop.length - 1);
+  const route = [...loop.slice(k), ...loop.slice(0, k)];
   const start = route[0];
   const d: DroneActor = {
     idx: sim.drones.length,

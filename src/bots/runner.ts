@@ -26,6 +26,8 @@ export interface StopRunResult {
   parts: number;
   skin: number;
   papers: number;
+  /** Car battery gained (gas stations). */
+  car: number;
   seconds: number;
   left: boolean;
   lost: number;
@@ -56,8 +58,14 @@ export function stopConfigFor(o: StopRunOpts): StopConfig {
 export function runStopBots(o: StopRunOpts): StopRunResult {
   const cfg = stopConfigFor(o);
   const sim = new StopSim(cfg);
-  const bots: StopBot[] = [new StopBot(o.kind, 0, o.players === 2 ? 'charger' : 'solo', o.seed * 7 + 1)];
-  if (o.players === 2) bots.push(new StopBot(o.kind, 1, 'searcher', o.seed * 7 + 2));
+  const car0 = sim.resources.carBattery;
+  // Two players split the work the way a sensible team would: Brick's heavy steps make him a poor sneak in a
+  // crowded diner, so there Wren searches while he sits; at depots and gas stations he works the lockers.
+  const brickSearches = o.layout.kind !== 'diner';
+  const r0 = o.players === 2 ? (brickSearches ? 'charger' : 'searcher') : 'solo';
+  const r1 = brickSearches ? 'searcher' : 'charger';
+  const bots: StopBot[] = [new StopBot(o.kind, 0, r0, o.seed * 7 + 1)];
+  if (o.players === 2) bots.push(new StopBot(o.kind, 1, r1, o.seed * 7 + 2));
   let alertAt: number | null = null;
   const limit = BOT_LIMIT_SECONDS * 60;
   for (let t = 0; t < limit && !sim.outcome; t++) {
@@ -74,6 +82,7 @@ export function runStopBots(o: StopRunOpts): StopRunResult {
     parts: sim.stats.found.parts,
     skin: sim.stats.found.skinPatches,
     papers: sim.stats.found.papers,
+    car: Math.round(sim.resources.carBattery - car0),
     seconds: sim.time,
     left: out?.end === 'left',
     lost: out?.lost.length ?? 0,
@@ -90,6 +99,7 @@ export interface BandStats {
   meanParts: number;
   skinRate: number;
   papersRate: number;
+  meanCar: number;
   timeouts: number;
   lostRate: number;
 }
@@ -106,6 +116,7 @@ export function summarize(results: readonly StopRunResult[]): BandStats {
     meanParts: mean((r) => r.parts),
     skinRate: mean((r) => (r.skin > 0 ? 1 : 0)),
     papersRate: mean((r) => (r.papers > 0 ? 1 : 0)),
+    meanCar: mean((r) => r.car),
     timeouts: results.filter((r) => r.end === 'timeout').length,
     lostRate: mean((r) => (r.lost > 0 ? 1 : 0)),
   };
