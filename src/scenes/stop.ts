@@ -16,7 +16,9 @@ import { buildLevel, vendingMesh, type LevelBuild } from '../render/level';
 import { LightPool } from '../render/lights';
 import { C } from '../render/palettes';
 import { Particles, Sparks } from '../render/particles';
+import { buildWantedPosters } from '../render/posters';
 import { StopView } from '../render/stopview';
+import { postersUp } from '../sim/behaviors';
 import { F } from '../sim/grid';
 import { StopSim, type StopConfig } from '../sim/stop';
 import type { SimEvent, StopOutcome } from '../sim/types';
@@ -120,6 +122,8 @@ export class StopScene implements GameScene {
     this.scene.fog = new THREE.FogExp2(fog.color, fog.density);
     this.level = buildLevel(this.sim.layout, cfg.region, cfg.weather, cfg.seed);
     this.scene.add(this.level.group);
+    // Heat 2+: Wanted posters of the party on diner and gas station corkboards.
+    if (postersUp(this.sim)) this.scene.add(buildWantedPosters(this.sim.layout, cfg.party));
     this.lights = new LightPool(this.scene);
     for (const l of this.level.lights) {
       const e = this.lights.add(l);

@@ -26,6 +26,8 @@ function gasA(): string[] {
   g.text(6, 6, 'SSS');
   g.text(11, 6, 'SSS');
   g.text(12, 1, 'V');
+  // The corkboard (Wanted posters at Heat 2+).
+  g.set(14, 0, 'Q');
   g.hline(9, 5, 22, 'W');
   g.set(14, 9, 'D');
   // Garage bay, open to the lot on the south side.
@@ -114,6 +116,7 @@ function gasB(): string[] {
   g.text(24, 6, 'SSS');
   g.text(29, 6, 'SSS');
   g.set(36, 6, 'V');
+  g.set(28, 0, 'Q');
   g.hline(9, 17, 36, 'W');
   g.set(26, 9, 'D');
   // Canopy and pumps.

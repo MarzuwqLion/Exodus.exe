@@ -785,6 +785,11 @@ export class StopSim {
     }
     this.stats.lost.push({ member: m.id, how });
     this.emit({ t: 'lost', member: m.id, how });
+    // Losing someone is stress (spec §12.6): every android still with the party loses Integrity.
+    for (const o of this.members) {
+      if (o === m || o.state.kind !== 'android' || o.state.status === 'lost') continue;
+      o.state.integrity = Math.max(0, o.state.integrity + TUNING.integrity.memberLost);
+    }
     // Every android lost: the run ends at once.
     const androidsLeft = this.members.some((x) => x.state.kind === 'android' && x.state.status !== 'lost');
     if (!androidsLeft) this.finish('allLost', []);

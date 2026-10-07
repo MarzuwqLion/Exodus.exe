@@ -413,9 +413,6 @@ function hostileAi(sim: StopSim, h: NpcActor, dt: number): void {
           h.stepT = 0;
           sim.emit({ t: 'sfx', cue: 'scanner_sweep', x: m.x, y: m.y });
           sim.lose(m, 'reclaimed');
-          for (const o of sim.members)
-            if (o.state.kind === 'android' && sim.present(o))
-              o.state.integrity = Math.max(0, o.state.integrity + TUNING.integrity.memberLost);
         }
         return;
       }

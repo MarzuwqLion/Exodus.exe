@@ -768,7 +768,11 @@ export function updateMode(sim: StopSim, m: MemberActor, dt: number, held: boole
         setMode(m, 'free');
         break;
       }
-      if (!held) {
+      // June's Patch is an ability (a press), not a hold: it runs until done or the patient walks off.
+      const patient = ch.kind === 'patch' ? sim.members[ch.target] : undefined;
+      const keep =
+        ch.kind === 'patch' ? !!patient && dist(patient, m) <= TUNING.abilities.patch.radius + 0.6 : held;
+      if (!keep) {
         m.channel = null;
         setMode(m, 'free');
         break;

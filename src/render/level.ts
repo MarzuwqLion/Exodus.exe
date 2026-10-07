@@ -46,7 +46,7 @@ function interiorAt(L: ParsedLayout, x: number, y: number): boolean {
 }
 
 /** A wall whose north side is a room faces the camera: it renders cut away. */
-function isSouthWall(L: ParsedLayout, x: number, y: number): boolean {
+export function isSouthWall(L: ParsedLayout, x: number, y: number): boolean {
   return (
     interiorAt(L, x, y - 1) ||
     (isWallish(ch(L, x, y - 1)) && interiorAt(L, x, y - 2) && !interiorAt(L, x, y + 1))

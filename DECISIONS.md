@@ -66,3 +66,8 @@ One line per call: what was decided and why. Newest at the bottom of each sectio
 - Near the keeper's personal detail (by the fridge, the back-room door, or the walk-in cooler), a caption describes it. The props themselves come with the art pass.
 - Compromised Station: the van is parked outside from the start. One Recycler goes through the house and one walks a beat around it, on loops generated from the house's walls and floor. Lantern's warning shows on arrival. The lamps are mostly off. Careful bots take the bag every time; reckless ones get caught every time.
 - Lantern texts use a phone overlay at the bottom left that types the message in, holds it long enough to read, and slides away. Messages queue.
+- June's Patch is an ability press, not a hold. It runs its 4 s without A held and stops if the patient walks off. It used to need A held, which cancelled it on the first frame.
+- Losing any party member costs every android still with the party 15 Integrity, the moment it happens: reclaimed, left behind, turned in, or June arrested. It used to apply only to reclamations.
+- Heave shoves vending machines, the only free-standing heavy fixture in the layouts.
+- June's run-level systems are pure functions for the camp and the events engine: Hunger per leg, Rations at camp (free at a Station), starving, leaving at 0 Health, Trust and the quiet goodbye below 20, Heat from logged kiosk sessions, and Stations shown two columns ahead.
+- Wanted posters: one small poster per android (a red header, hair or hat, skin, jacket, a line of print), pinned on the corkboard as unlit paper at Heat 2+. Gas stations got a corkboard in the store.

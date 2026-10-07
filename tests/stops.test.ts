@@ -14,6 +14,9 @@ import { startingParty, startingResources } from '../src/run/party';
 import { F } from '../src/sim/grid';
 import { parseLayout, validateLayout } from '../src/sim/layout';
 import { Rng } from '../src/core/rng';
+import { PARTY_LOOKS } from '../src/models/looks';
+import { POSTER_H, POSTER_W, wantedPosterPixels } from '../src/models/posters';
+import { C } from '../src/render/palettes';
 import {
   applyTrade,
   canTrade,
@@ -315,6 +318,42 @@ describe('Stations (spec §10.5)', () => {
         expect(Math.hypot(n.x - start[i].x, n.y - start[i].y), L.id).toBeGreaterThan(1),
       );
       expect(hostiles.some((n) => sim.grid.flagAt(n.x, n.y, F.INTERIOR))).toBe(true);
+    }
+  });
+});
+
+describe('Wanted posters (spec §10.3, §11.6)', () => {
+  it('each android has a different low-res face, in palette colors only', () => {
+    const palette = new Set<number>(Object.values(C));
+    const sigs = (['wren', 'brick', 'vesper'] as const).map((id) => {
+      const px = wantedPosterPixels(PARTY_LOOKS[id]);
+      expect(px).toHaveLength(POSTER_W * POSTER_H);
+      for (const c of px) expect(palette.has(c), `${id} ${c.toString(16)}`).toBe(true);
+      return px.join(',');
+    });
+    expect(new Set(sigs).size).toBe(3);
+  });
+
+  it('diners and gas stations have a corkboard; at Heat 2+ standing near it draws +6/s', () => {
+    for (const L of [...STOP_LAYOUTS.diner, ...STOP_LAYOUTS.gas]) {
+      expect(
+        L.grid.some((r) => r.includes('Q')),
+        L.id,
+      ).toBe(true);
+      const rate = (heat: number): number => {
+        const sim = new StopSim(cfg({ layout: L, heat }));
+        let q = { x: 0, y: 0 };
+        sim.layout.def.grid.forEach((r, y) => {
+          const x = r.indexOf('Q');
+          if (x >= 0) q = { x, y };
+        });
+        const spot = sim.grid.nearestWalkable(q.x + 0.5, q.y + 1.5)!;
+        place(sim, 'wren', spot.x, spot.y);
+        sim.step({ 0: intent({}, 0.05, 0) });
+        return sim.member('wren')!.rate;
+      };
+      expect(rate(2), L.id).toBeGreaterThanOrEqual(TUNING.rates.wantedPoster);
+      expect(rate(1), L.id).toBeLessThan(TUNING.rates.wantedPoster);
     }
   });
 });
