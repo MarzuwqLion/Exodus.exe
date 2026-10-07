@@ -85,7 +85,7 @@ export const STATION_KITCHEN: LayoutDef = {
   variant: 0,
   name: 'Station',
   grid: kitchen(),
-  points: { keeper: [5, 3], bag: [20, 4], enter: [24, 17] },
+  points: { keeper: [5, 3], bag: [20, 4], enter: [24, 17], detail: [9, 3] },
   npcs: [KEEPER],
   noAutoContainers: ['H'],
   vanEntry: [24, 17],
@@ -98,7 +98,7 @@ export const STATION_FEEDSTORE: LayoutDef = {
   variant: 1,
   name: 'Station',
   grid: feedstore(),
-  points: { keeper: [8, 5], bag: [22, 4], enter: [1, 17] },
+  points: { keeper: [8, 5], bag: [22, 4], enter: [1, 17], detail: [18, 4] },
   npcs: [KEEPER],
   noAutoContainers: ['H'],
   vanEntry: [1, 17],
@@ -111,7 +111,7 @@ export const STATION_CHURCH: LayoutDef = {
   variant: 2,
   name: 'Station',
   grid: church(),
-  points: { keeper: [18, 3], bag: [24, 4], enter: [28, 17] },
+  points: { keeper: [18, 3], bag: [24, 4], enter: [28, 17], detail: [20, 3] },
   npcs: [KEEPER],
   noAutoContainers: ['H'],
   vanEntry: [28, 17],
@@ -124,9 +124,71 @@ export const STATIONS: Record<StationInterior, LayoutDef> = {
   church: STATION_CHURCH,
 };
 
+/** Corners just outside the house walls, for the Recyclers' beat around it. */
+function perimeter(grid: readonly string[]): Record<string, [number, number]> {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -1;
+  let y1 = -1;
+  grid.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] !== '#') continue;
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+  });
+  const w = grid[0].length;
+  const h = grid.length;
+  const l = Math.max(0, x0 - 1);
+  const t = Math.max(0, y0 - 1);
+  const r = Math.min(w - 1, x1 + 1);
+  const b = Math.min(h - 1, y1 + 1);
+  return { r1: [r, b], r2: [r, t], r3: [l, t], r4: [l, b] };
+}
+
+/** A loop through the main room (its floor tiles), for a Recycler searching the house. */
+function insideLoop(grid: readonly string[]): Record<string, [number, number]> {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -1;
+  let y1 = -1;
+  grid.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] !== '.') continue;
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+  });
+  // The nearest bare floor to a spot (tables and chairs are in the way).
+  const floor = (fx: number, fy: number): [number, number] => {
+    let best: [number, number] = [fx, fy];
+    let bd = Infinity;
+    grid.forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        const d = (x - fx) ** 2 + (y - fy) ** 2;
+        if (row[x] === '.' && d < bd) {
+          bd = d;
+          best = [x, y];
+        }
+      }
+    });
+    return best;
+  };
+  const ax = Math.round(x0 + (x1 - x0) * 0.2);
+  const bx = Math.round(x0 + (x1 - x0) * 0.75);
+  const ay = Math.round(y0 + (y1 - y0) * 0.3);
+  const by = Math.round(y0 + (y1 - y0) * 0.8);
+  return { i1: floor(ax, by), i2: floor(bx, by), i3: floor(bx, ay), i4: floor(ax, ay) };
+}
+
 /**
- * A compromised Station: same interior, a Recycler van outside with two Recyclers walking the lot, the keeper
- * gone, and the supply bag (Cells, Parts, Papers) in the back room.
+ * A compromised Station: same interior, the keeper gone, a Recycler van parked outside, one Recycler going
+ * through the house and one walking a beat around it. The supply bag (Cells, Parts, Papers) waits in the
+ * back room.
  */
 export function compromised(base: LayoutDef): LayoutDef {
   const bag = base.points.bag;
@@ -134,9 +196,11 @@ export function compromised(base: LayoutDef): LayoutDef {
     ...base,
     id: `${base.id}-compromised`,
     kind: 'compromised',
+    points: { ...base.points, ...perimeter(base.grid), ...insideLoop(base.grid) },
+    routes: { ...base.routes, around: ['r1', 'r2', 'r3', 'r4'], inside: ['i1', 'i2', 'i3', 'i4'] },
     npcs: [
-      { role: 'recycler', count: [1, 1], at: 'enter' },
-      { role: 'gunner', count: [1, 1], at: 'enter' },
+      { role: 'recycler', count: [1, 1], at: 'i3', route: 'inside' },
+      { role: 'gunner', count: [1, 1], at: 'r1', route: 'around' },
     ],
     containers: [{ kind: 'supplyBag', x: bag[0], y: bag[1] - 1 }],
   };

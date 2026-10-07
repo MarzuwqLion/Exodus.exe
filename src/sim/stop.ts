@@ -34,7 +34,7 @@ import type {
 import { controlMembers, updateMemberActivities } from './members';
 import { updatePartyAi } from './partyai';
 import { spawnNpcs, updateNpcs } from './npc';
-import { updateHostiles, setupCameras } from './hostiles';
+import { setupCameras, updateHostiles } from './hostiles';
 import { resolveCombat } from './combat';
 import { updateBehaviors } from './behaviors';
 import { perceive } from './perception';
@@ -709,9 +709,13 @@ export class StopSim {
   }
 
   /** Start the departure: the car leaves now if everyone is in, or waits up to 10 s. */
+  /** Whether the car can leave now: not from a Station (the party rests there), the Port, or a closed gate. */
+  carCanLeave(): boolean {
+    return !this.cfg.port && this.kind !== 'station' && !(this.cfg.bust && !this.gateOpen);
+  }
+
   beginDeparture(holder: number): void {
-    if (this.exit.departing) return;
-    if (this.cfg.bust && !this.gateOpen) return;
+    if (this.exit.departing || !this.carCanLeave()) return;
     this.exit.departing = true;
     this.exit.holder = holder;
     this.exit.waitT = TUNING.exit.waitSeconds;

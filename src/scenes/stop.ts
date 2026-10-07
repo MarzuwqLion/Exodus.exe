@@ -36,6 +36,15 @@ export interface StopParams {
   onDrawUi?: (scene: StopScene, ui: UiSurface) => void;
 }
 
+/** A panel over the stop (a conversation, the Station panel): the stop waits while it is open. */
+export interface StopModal {
+  /** Returns true when it closes. */
+  update(dt: number, intents: readonly (PlayerIntent | null)[]): boolean;
+  draw(ui: UiSurface): void;
+  /** What opens when this one closes, if anything. */
+  then?: () => StopModal | null;
+}
+
 /** Fog tint and density per region (spec §4.7). */
 export function regionFog(
   region: Region,
@@ -96,6 +105,7 @@ export class StopScene implements GameScene {
   private beaconEmitters: ReturnType<LightPool['add']>[] = [];
   /** QA: freeze time for pixel comparisons. */
   qaStatic = false;
+  modal: StopModal | null = null;
   freeze = false;
 
   constructor(
@@ -105,7 +115,7 @@ export class StopScene implements GameScene {
     const cfg = params.cfg;
     this.id = cfg.layout.kind;
     this.sim = new StopSim(cfg);
-    const interior = cfg.layout.kind === 'station';
+    const interior = cfg.layout.kind === 'station' || cfg.layout.kind === 'compromised';
     const fog = regionFog(cfg.region, cfg.weather, interior);
     this.scene.fog = new THREE.FogExp2(fog.color, fog.density);
     this.level = buildLevel(this.sim.layout, cfg.region, cfg.weather, cfg.seed);
@@ -121,6 +131,11 @@ export class StopScene implements GameScene {
     this.scene.add(this.sparks.mesh);
     this.view = new StopView(this.sim, vendingMesh);
     this.scene.add(this.view.group);
+    // A compromised Station: the Recycler van is already parked outside.
+    if (this.sim.kind === 'compromised') {
+      const [vx, vy] = cfg.layout.vanEntry;
+      this.view.showVan(vx + 0.5, vy + 0.5);
+    }
     this.hud = new StopHud(this.sim, this.view, this.rig, (slot) =>
       game.input.glyphDevice(slot, game.save.settings.glyphStyle),
     );
@@ -224,17 +239,21 @@ export class StopScene implements GameScene {
       return;
     }
     if (this.freeze) return;
-    if (this.hitPause > 0) {
+    if (this.modal) {
+      if (this.modal.update(dt, [this.game.intents[0], this.game.intents[1]]))
+        this.modal = this.modal.then?.() ?? null;
+    } else if (this.hitPause > 0) {
       this.hitPause--;
       return;
+    } else {
+      const intents: Partial<Record<Slot, PlayerIntent | null>> = {
+        0: this.game.intents[0],
+        1: this.game.intents[1],
+      };
+      this.sim.step(intents);
+      this.handleEvents(this.sim.events);
+      this.params.onTick?.(this, dt);
     }
-    const intents: Partial<Record<Slot, PlayerIntent | null>> = {
-      0: this.game.intents[0],
-      1: this.game.intents[1],
-    };
-    this.sim.step(intents);
-    this.handleEvents(this.sim.events);
-    this.params.onTick?.(this, dt);
     if (this.sim.outcome && !this.finished) {
       this.finished = true;
       this.exitDelay = 0.8;
@@ -478,6 +497,7 @@ export class StopScene implements GameScene {
       if (a > 0.3) ui.text(this.params.title, Math.floor(ui.width / 2), 44, C.fog1, { align: 'center' });
     }
     this.params.onDrawUi?.(this, ui);
+    this.modal?.draw(ui);
   }
 
   partyLines(): string[] {

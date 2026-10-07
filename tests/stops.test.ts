@@ -13,6 +13,16 @@ import { emptyIntent } from '../src/input/intents';
 import { startingParty, startingResources } from '../src/run/party';
 import { F } from '../src/sim/grid';
 import { parseLayout, validateLayout } from '../src/sim/layout';
+import { Rng } from '../src/core/rng';
+import {
+  applyTrade,
+  canTrade,
+  keeperForColumn,
+  rollCompromised,
+  stationCare,
+  stationLayout,
+  type StationTrade,
+} from '../src/run/station';
 import { StopSim, type StopConfig } from '../src/sim/stop';
 
 function cfg(over: Partial<StopConfig> = {}): StopConfig {
@@ -214,5 +224,97 @@ describe('footsteps (spec §8.1 hearing, §9.3 tell)', () => {
     const mine = heard.filter((h) => h.member === w.idx);
     expect(mine.length).toBeGreaterThan(0);
     expect(mine.every((h) => h.radius === TUNING.tells.sprintHearing)).toBe(true);
+  });
+});
+
+describe('Stations (spec §10.5)', () => {
+  it('every Station column has a keeper, and each keeper lives in a Station interior', () => {
+    for (const col of TUNING.run.stationColumns) {
+      const k = keeperForColumn(col);
+      expect(k, `column ${col}`).toBeDefined();
+      expect(stationLayout(k!).kind).toBe('station');
+      expect(stationLayout(k!, true).kind).toBe('compromised');
+      expect(k!.lines.length).toBeGreaterThanOrEqual(2);
+      expect(k!.lines.length).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('the keeper patches everyone up: +25 Hull, +25 Skin, +20 Integrity, capped at 100', () => {
+    const party = startingParty();
+    const [w, b] = party;
+    if (w.kind !== 'android' || b.kind !== 'android') throw new Error('androids expected');
+    w.hull = 50;
+    w.skin = 90;
+    w.integrity = 30;
+    b.status = 'lost';
+    b.hull = 10;
+    const lines = stationCare(party);
+    expect(w.hull).toBe(75);
+    expect(w.skin).toBe(100);
+    expect(w.integrity).toBe(50);
+    expect(b.hull).toBe(10);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain('Wren');
+  });
+
+  it('each trade works once and only with what it costs', () => {
+    const res = startingResources();
+    res.parts = 3;
+    res.papers = 0;
+    const used = new Set<StationTrade>();
+    expect(canTrade(res, 'papersForCells', used)).toBe(false);
+    expect(canTrade(res, 'partsForPapers', used)).toBe(true);
+    applyTrade(res, 'partsForPapers');
+    used.add('partsForPapers');
+    expect(res.parts).toBe(1);
+    expect(res.papers).toBe(1);
+    expect(canTrade(res, 'partsForPapers', used)).toBe(false);
+    const cells = res.cells;
+    applyTrade(res, 'papersForCells');
+    expect(res.papers).toBe(0);
+    expect(res.cells).toBe(cells + TUNING.station.tradePapersForCells);
+  });
+
+  it('a Station is compromised only at Heat 3, about one time in four', () => {
+    const rng = new Rng(7);
+    let hits = 0;
+    for (let i = 0; i < 4000; i++) if (rollCompromised(3, rng)) hits++;
+    expect(hits / 4000).toBeGreaterThan(0.2);
+    expect(hits / 4000).toBeLessThan(0.3);
+    for (let i = 0; i < 200; i++) expect(rollCompromised(2, rng)).toBe(false);
+  });
+
+  it('the keeper can be talked to, and the car does not leave from a Station', () => {
+    const sim = new StopSim(cfg({ layout: STOP_LAYOUTS.station[0] }));
+    const keeper = sim.npcs.find((n) => n.role === 'keeper')!;
+    place(sim, 'wren', keeper.x + 1, keeper.y);
+    sim.step({ 0: intent({ interact: true }) });
+    expect(sim.events.some((e) => e.t === 'talk' && e.npc === keeper.idx)).toBe(true);
+    const exit = sim.exitTiles.find((t) => sim.grid.walkableAt(t.x, t.y))!;
+    place(sim, 'wren', exit.x, exit.y);
+    run(sim, 200, () => ({ 0: intent({ interact: true, interactHeld: true }) }));
+    expect(sim.exit.departing).toBe(false);
+    expect(sim.outcome).toBeNull();
+  });
+
+  it('compromised: no keeper, the bag in the back room, one Recycler inside and one outside on a beat', () => {
+    for (const L of STOP_LAYOUTS.compromised) {
+      const sim = new StopSim(cfg({ layout: L }));
+      expect(
+        sim.npcs.some((n) => n.role === 'keeper'),
+        L.id,
+      ).toBe(false);
+      const bag = sim.containers.find((c) => c.kind === 'supplyBag');
+      expect(bag, L.id).toBeDefined();
+      expect(sim.grid.flagAt(bag!.access.x, bag!.access.y, F.STAFF), L.id).toBe(true);
+      const hostiles = sim.npcs.filter((n) => n.hostile);
+      expect(hostiles.length, L.id).toBe(2);
+      const start = hostiles.map((n) => ({ x: n.x, y: n.y }));
+      run(sim, 60 * 12, () => ({ 0: intent() }));
+      hostiles.forEach((n, i) =>
+        expect(Math.hypot(n.x - start[i].x, n.y - start[i].y), L.id).toBeGreaterThan(1),
+      );
+      expect(hostiles.some((n) => sim.grid.flagAt(n.x, n.y, F.INTERIOR))).toBe(true);
+    }
   });
 });

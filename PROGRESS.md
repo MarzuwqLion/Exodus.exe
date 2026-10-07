@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M4.3 Stations
+**Current task:** M4.4 Every ability and tell
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -54,7 +54,7 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 - [x] M4.1 Diner (two layouts): ordering, coffee, booths, TV rumors, waitress expectations
 - [x] M4.2 Gas Station (two layouts): car charging, rotating camera, garage
-- [ ] M4.3 Stations (three interiors), keepers, benefits, trades, compromised Stations
+- [x] M4.3 Stations (three interiors), keepers, benefits, trades, compromised Stations
 - [ ] M4.4 Every ability and tell
 - [ ] M4.5 June's systems (legal ID, conductor, Patch, hunger, Trust)
 - [ ] M4.6 Glitches, Integrity, factory reset

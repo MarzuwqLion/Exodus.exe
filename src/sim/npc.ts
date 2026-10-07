@@ -650,6 +650,12 @@ function routine(sim: StopSim, n: NpcActor, dt: number): void {
     case 'guard':
       guard(sim, n, dt);
       break;
+    case 'recycler':
+    case 'gunner':
+      // Recyclers posted at a compromised Station walk a beat around the house like guards.
+      if (routeOf(sim, n).length > 0) guard(sim, n, dt);
+      else steer(n, 0, 0, dt);
+      break;
     case 'mechanic':
       stationary(sim, n, dt, 'bench', 'benchFace', 'search');
       break;

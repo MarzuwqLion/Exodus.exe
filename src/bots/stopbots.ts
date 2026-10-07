@@ -78,6 +78,9 @@ export class StopBot {
   /** Should we head for the car now? */
   private timeToLeave(sim: StopSim): boolean {
     if (sim.alert.on || sim.exit.departing) return true;
+    // A compromised Station: take the keeper's bag and go quietly.
+    if (sim.kind === 'compromised')
+      return !sim.containers.some((c) => c.kind === 'supplyBag' && !c.searched) || sim.patrol.fired.drone1;
     if (this.kind === 'cautious') return sim.patrol.fired.drone1;
     // Greedy stays through the second drone: out about 40 s after it arrives.
     if (this.kind === 'greedy') return sim.time > sim.patrol.drone2 + 40 || sim.time > 320;

@@ -71,8 +71,7 @@ function floorColor(ctx: Ctx, c: string, x: number, y: number): number {
   const g = regionGround(ctx.region);
   const v = (x * 7 + y * 13) % 5;
   if (L.grid.has(x, y, F.STAFF)) return v === 0 ? C.slate0 : C.slate1;
-  if (L.grid.has(x, y, F.INTERIOR))
-    return L.def.kind === 'station' ? C.rust0 : v === 0 ? C.slate1 : C.concrete0;
+  if (L.grid.has(x, y, F.INTERIOR)) return isHouse(L.def.kind) ? C.rust0 : v === 0 ? C.slate1 : C.concrete0;
   if (c === '_') return v === 0 ? C.concrete0 : C.concrete1;
   if (c === '"' || c === '^' || c === '%') return v < 2 ? g.dirt2 : g.dirt;
   if (c === '~') return C.night1;
@@ -108,6 +107,7 @@ function wallColor(ctx: Ctx, x: number, y: number): { side: number; top: number 
     case 'diner':
       return { side: v === 0 ? C.fog0 : C.concrete2, top: C.night2 };
     case 'station':
+    case 'compromised':
       return { side: v === 0 ? C.rust1 : C.rust2, top: C.night2 };
     case 'gas':
       return { side: v === 0 ? C.concrete1 : C.concrete2, top: C.night2 };
@@ -359,14 +359,16 @@ function buildLights(ctx: Ctx): void {
     for (let x = 1; x < G.w; x += 5) {
       if (!interiorAt(L, x, y)) continue;
       const staff = G.has(x, y, F.STAFF);
-      const station = L.def.kind === 'station';
+      // A Station is lamp-lit; a compromised one has most lamps off (the keeper is gone).
+      const station = isHouse(L.def.kind);
+      const dim = L.def.kind === 'compromised';
       k.glow(() => k.box(0.9, 0.06, 0.18, station ? C.amber2 : C.fog2, { x: x + 0.5, y: 2.95, z: y + 0.5 }));
       k.light({
         x: x + 0.5,
         y: 2.7,
         z: y + 0.5,
         color: station ? C.amber2 : C.fog2,
-        intensity: station ? 2.2 : staff ? 1.1 : 1.5,
+        intensity: dim ? 0.9 : station ? 2.2 : staff ? 1.1 : 1.5,
         range: 7,
         flicker: station ? 0 : 0.5,
       });
@@ -500,4 +502,9 @@ export function vendingMesh(): THREE.Group {
   if (out.solid) g.add(new THREE.Mesh(out.solid, m.toon));
   if (out.glow) g.add(new THREE.Mesh(out.glow, m.glow));
   return g;
+}
+
+/** Station interiors (and compromised ones) are a home, not a shop. */
+function isHouse(kind: string): boolean {
+  return kind === 'station' || kind === 'compromised';
 }

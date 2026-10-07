@@ -27,7 +27,8 @@ export type InteractionKind =
   | 'plugCar'
   | 'hack'
   | 'kiosk'
-  | 'bag';
+  | 'bag'
+  | 'talk';
 
 export interface Interaction {
   kind: InteractionKind;
@@ -105,7 +106,15 @@ export function findInteraction(sim: StopSim, m: MemberActor): Interaction | nul
         y: booth.y,
       };
   }
-  if (sim.inExit(m.x, m.y) && !sim.exit.departing && !sim.cfg.port) {
+  // A Station keeper (spec §10.5): talk, or come back to rest.
+  if (sim.kind === 'station') {
+    for (const n of sim.npcs) {
+      if (n.role !== 'keeper' || !sim.isActiveNpc(n) || dist(n, m) > REACH + 0.5) continue;
+      return { kind: 'talk', verb: 'Talk', hold: 0, target: n.idx, x: n.x, y: n.y };
+    }
+  }
+  // At a Station the party rests rather than driving on (spec §10.5).
+  if (sim.inExit(m.x, m.y) && !sim.exit.departing && !sim.cfg.port && sim.kind !== 'station') {
     if (sim.cfg.bust && !sim.gateOpen)
       return {
         kind: 'exit',
@@ -350,6 +359,10 @@ export function startInteraction(sim: StopSim, m: MemberActor, it: Interaction):
       sim.emit({ t: 'sfx', cue: 'kiosk_beep', x: it.x, y: it.y });
       return;
     }
+    case 'talk':
+      m.vx = m.vy = 0;
+      sim.emit({ t: 'talk', npc: it.target, member: m.idx });
+      return;
     case 'search':
     case 'pry':
     case 'bag':

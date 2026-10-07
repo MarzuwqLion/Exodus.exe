@@ -61,7 +61,7 @@ export function controlMembers(sim: StopSim, dt: number): void {
       const it = sim.intents[m.controller];
       if (it?.interactHeld && (m.mode === 'free' || m.mode === 'carry')) holder = m.idx;
     }
-    if (holder >= 0 && !(sim.cfg.bust && !sim.gateOpen) && !sim.cfg.port) {
+    if (holder >= 0 && sim.carCanLeave()) {
       sim.exit.holdT += dt;
       sim.exit.holder = holder;
       if (sim.exit.holdT >= TUNING.exit.holdSeconds) sim.beginDeparture(holder);

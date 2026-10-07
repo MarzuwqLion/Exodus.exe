@@ -402,11 +402,13 @@ export type SimEvent =
   | { t: 'flash' }
   | { t: 'horn' }
   | { t: 'gate' }
+  /** A party member talks to a Station keeper. */
+  | { t: 'talk'; npc: number; member: number }
   | { t: 'exit' };
 
 export interface StopOutcome {
   /** How the stop ended. */
-  end: 'left' | 'allLost' | 'sailed' | 'missedShip';
+  end: 'left' | 'allLost' | 'sailed' | 'missedShip' | 'rested';
   seconds: number;
   alert: boolean;
   /** Resources at the end (the sim works on a copy). */

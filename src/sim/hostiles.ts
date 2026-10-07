@@ -178,7 +178,8 @@ function updatePatrol(sim: StopSim): void {
   }
   if (!p.fired.sweep && sim.time >= p.sweep) {
     p.fired.sweep = true;
-    if (!sim.alert.on) startSweep(sim);
+    // At a compromised Station the van is already here.
+    if (!sim.alert.on && sim.kind !== 'compromised') startSweep(sim);
     sim.emit({ t: 'patrol', which: 'sweep' });
   }
   if (!p.fired.drone2 && sim.time >= p.drone2) {
