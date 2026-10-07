@@ -8,6 +8,7 @@ import { TUNING } from '../content/tuning';
 import { freshSeed } from '../core/rng';
 import type { MemberId, RunState, Slot } from '../core/types';
 import type { Game } from '../game';
+import { reviveAboard, sailedMembers } from '../run/ending';
 import { lanternFor, legMessages, stationRevealedMessage } from '../run/lantern';
 import { currentNode } from '../run/map';
 import {
@@ -23,6 +24,7 @@ import {
   stopConfigForRun,
   withRng,
 } from '../run/run';
+import { applyPerks, awardCores, coreAward, type CoreAward } from '../run/meta';
 import { keeperForColumn, rollCompromised } from '../run/station';
 import type { StopOutcome } from '../sim/types';
 import { LanternPhone } from '../ui/phone';
@@ -37,16 +39,22 @@ export class RunFlow {
   readonly phone = new LanternPhone();
   /** The leg's road event is still to come (the drive scene shows it). */
   pendingEvent = false;
+  /** Memory cores the run earned (spec §15), set once when the run ends. */
+  award: CoreAward | null = null;
+  /** Who sailed on the Sankofa, set when the ship sails. */
+  aboard: MemberId[] = [];
 
   constructor(
     readonly game: Game,
     public run: RunState,
   ) {}
 
-  /** A new run from Boston: player 1 plays Wren; player 2 (if joined) Brick. */
+  /** A new run from Boston with every unlocked perk: player 1 plays Wren; player 2 (if joined) Brick. */
   static begin(game: Game, seed: number = game.config.seed ?? freshSeed()): RunFlow {
     const control: Record<Slot, MemberId | null> = { 0: 'wren', 1: game.input.isJoined(1) ? 'brick' : null };
-    const flow = new RunFlow(game, newRun(seed, { control }));
+    const run = newRun(seed, { control });
+    applyPerks(run, game.save.meta.unlocked);
+    const flow = new RunFlow(game, run);
     game.flow = flow;
     flow.save();
     return flow;
@@ -62,6 +70,11 @@ export class RunFlow {
   save(): void {
     this.game.save.run = this.run;
     this.game.persist();
+  }
+
+  /** Real play time for the stats screen (§16.2). It stops when the run ends. */
+  addPlayTime(dt: number): void {
+    if (this.run.phase !== 'ended') this.run.stats.playTimeMs += dt * 1000;
   }
 
   say(msgs: readonly (LanternMessage | null)[]): void {
@@ -166,18 +179,41 @@ export class RunFlow {
     this.sailed(aboard);
   }
 
-  /** The Sankofa sails with these members aboard (at least one android): the voyage, then Ghana (§16). */
+  /**
+   * The Sankofa sails with these members aboard (at least one android): the run is won. The voyage plays,
+   * then Ghana (§16), then the memory cores.
+   */
   sailed(aboard: MemberId[]): void {
-    void aboard;
-    this.end('ghana');
+    reviveAboard(this.run, aboard);
+    this.aboard = [...aboard];
+    this.finish(true);
+    this.game.goto('voyage', { aboard: this.aboard });
   }
 
-  /** The run is over, one way or another. The save slot is cleared. */
+  /** The run ends: Ghana goes by way of the voyage; anything else is a game over (§16.3). */
   end(kind: RunEnding): void {
+    if (kind === 'ghana') return this.sailed(sailedMembers(this.run));
+    // Every android was lost (a stop's outcome isn't applied to the run when it ends it).
+    if (kind === 'lost') for (const m of this.run.party) if (m.kind === 'android') m.status = 'lost';
+    this.finish(false);
+    this.game.goto('gameover', { kind });
+  }
+
+  /** The run is over: award the memory cores and clear the save slot, exactly once. */
+  finish(reachedGhana: boolean): CoreAward {
+    if (this.award) return this.award;
     this.run.phase = 'ended';
+    this.award = coreAward(this.run, reachedGhana);
+    awardCores(this.game.save.meta, this.award);
     this.game.save.run = null;
     this.game.persist();
-    this.game.goto('ending', { kind });
+    return this.award;
+  }
+
+  /** Back to the title after the end screens: the run is gone. */
+  leave(): void {
+    this.game.flow = null;
+    this.game.goto('title');
   }
 }
 

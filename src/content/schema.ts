@@ -194,6 +194,8 @@ export interface JuneEpilogue {
   arrested: string;
   left: string;
   wentHome: string;
+  /** She reached the Port with the party but didn't make it aboard. */
+  quay: string;
 }
 
 export interface VoyageConversation {

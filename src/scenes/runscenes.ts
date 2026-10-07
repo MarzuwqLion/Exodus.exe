@@ -1,13 +1,10 @@
 /**
  * Run scene factories: stops, Stations, compromised Stations, and checkpoint busts inside a run (their
- * outcomes go back to the run flow), the Port, and the ending screen.
+ * outcomes go back to the run flow), and the Port.
  */
-import * as THREE from 'three';
-import { GAME_OVER_TEXT, GHANA_LINES } from '../content/conversations';
 import { REGION_NAMES } from '../content/regions';
 import { TUNING } from '../content/tuning';
 import type { Game } from '../game';
-import { CameraRig } from '../render/camera';
 import { C } from '../render/palettes';
 import { activeJune, juneLeavesAtStation } from '../run/june';
 import { addRumor, currentNode, upcoming } from '../run/map';
@@ -122,63 +119,6 @@ export class PortPlaceholder implements GameScene {
   drawUi(ui: UiSurface): void {
     ui.text('The Port of Miami, before dawn.', ui.width / 2, ui.height / 2 - 10, C.fog1, { align: 'center' });
     ui.text(REGION_NAMES.lowcountry, ui.width / 2, ui.height / 2 + 6, C.slate1, { align: 'center' });
-  }
-}
-
-/** The end of a run: Ghana, or a game over (spec §16.2–16.3). Any button returns to the title. */
-export class EndingScene implements GameScene {
-  readonly id = 'ending';
-  private t = 0;
-  private scene = new THREE.Scene();
-  private rig = new CameraRig();
-
-  constructor(
-    private readonly game: Game,
-    private readonly kind: RunEnding,
-  ) {}
-
-  enter(): void {
-    this.game.audio.setMusic(this.kind === 'ghana' ? 'epilogue' : 'gameover');
-  }
-
-  exit(): void {}
-
-  allowJoin(): boolean {
-    return false;
-  }
-
-  pausable(): boolean {
-    return false;
-  }
-
-  tick(dt: number): void {
-    this.t += dt;
-    const its = [this.game.intents[0], this.game.intents[1]];
-    if (this.t > 2 && its.some((it) => it?.confirm)) {
-      this.game.flow = null;
-      this.game.goto('title');
-    }
-  }
-
-  frame(): void {}
-
-  world(): WorldView | null {
-    void this.scene;
-    void this.rig;
-    return null;
-  }
-
-  drawUi(ui: UiSurface): void {
-    const lines: string[] =
-      this.kind === 'ghana'
-        ? GHANA_LINES
-        : this.kind === 'lost'
-          ? [GAME_OVER_TEXT.allLost.title, GAME_OVER_TEXT.allLost.body]
-          : [GAME_OVER_TEXT.shipSailed.title, GAME_OVER_TEXT.shipSailed.body];
-    lines.forEach((l, i) => {
-      const shown = Math.max(0, Math.min(l.length, (this.t - i * 1.2) * 40));
-      if (shown > 0) ui.paragraph(l, 60, 120 + i * 24, ui.width - 120, i === 0 ? C.fog2 : C.fog1, shown);
-    });
   }
 }
 

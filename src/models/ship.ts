@@ -239,9 +239,13 @@ export function shipDeck(k: Kit): void {
       flat(k, x - 2.5, z - 0.05, x + 2.5, z + 0.05, 0.703, E.sky2);
     }
   }
-  // mast with a warm light
+  // A signal mast with a warm light: a lookout platform, a radar scanner, stays fore and aft. No crossbar, so
+  // the mast never reads as a cross against the sunrise.
   k.pipe([7.2, 0, -2.6], [7.2, 8.5, -2.6], 0.22, E.sky5);
-  k.box(2.4, 0.14, 0.14, E.sky5, { x: 7.2, y: 7.2, z: -2.6 });
+  k.box(1.0, 0.16, 1.0, E.sky4, { x: 7.2, y: 5.6, z: -2.6 });
+  k.box(0.5, 0.35, 0.5, E.sky1, { x: 7.2, y: 6.6, z: -2.6 });
+  k.box(0.22, 0.14, 1.9, E.sky5, { x: 7.2, y: 6.95, z: -2.6 });
+  for (const z of [-4.7, -0.3]) k.pipe([7.2, 7.8, -2.6], [7.2, 0, z], 0.05, E.sky4);
   k.glow(() => k.box(0.3, 0.3, 0.3, E.sun1, { x: 7.2, y: 8.5, z: -2.6 }));
   k.light({ x: 7.2, y: 8.4, z: -2.2, color: E.sun1, intensity: 4, range: 10, tag: 'mast' });
   // bollards, vents, a coil of line

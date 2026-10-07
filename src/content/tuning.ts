@@ -455,6 +455,20 @@ export const TUNING = {
     spareCells: 15,
   },
 
+  /** The voyage, Ghana, and the game-over screens (spec §16). */
+  epilogue: {
+    /** The storm over the Sankofa breaks up over this long. */
+    stormClearSeconds: 9,
+    /** The sunrise palette crossfade (spec §16.1). */
+    sunriseSeconds: 6,
+    /** Silence after the sunrise before the music starts. */
+    silenceSeconds: 3,
+    /** Each line of the Ghana text fades in over this long. */
+    lineFadeSeconds: 1.4,
+    /** How long the party takes to walk up the road into the cooperative. */
+    walkInSeconds: 11,
+  },
+
   drive: {
     fastForward: 4,
     eventAt: [0.35, 0.65] as [number, number],
