@@ -16,8 +16,8 @@ export const TUNING = {
     height: 360,
     /** Extra texels rendered around the frame so the sub-texel offset never shows an edge. */
     margin: 2,
-    /** World units per texel at zoom 1. A standing character (~1.75 m) is ~24–26 texels tall at 55° pitch. */
-    worldPerTexel: 1 / 24,
+    /** World units per texel at zoom 1. A standing character (~1.9 m) is ~27 texels tall at 55° pitch (spec: 22–28). */
+    worldPerTexel: 1 / 20,
     pitchDeg: 55,
     maxZoomOut: 1.35,
     /** Camera smoothing (critically damped spring) angular frequency. */
@@ -27,6 +27,10 @@ export const TUNING = {
     vignette: 0.55,
     ditherStrength: 0.035,
     outline: true,
+    /** Characters glow faintly in their own colors so they never sink into the dark (readability pillar). */
+    characterLift: 0.32,
+    ambient: 0.75,
+    moon: 0.45,
     poseFps: 12,
     maxLights: 8,
     lightCullDistance: 26,
