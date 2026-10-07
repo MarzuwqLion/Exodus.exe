@@ -1,0 +1,41 @@
+{
+  "name": "exodus-exe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EXODUS.EXE: a top-down roguelite road trip about passing as human.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --max-warnings 0 && prettier --check . --log-level warn",
+    "format": "prettier --write . --log-level warn",
+    "test": "vitest run",
+    "test:bots": "vitest run --config vitest.bots.config.ts",
+    "sim:economy": "tsx tools/economy.ts",
+    "qa:screens": "vite build --logLevel warn && tsx tools/screens.ts",
+    "bench": "vite build --logLevel warn && tsx tools/bench.ts"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "@types/three": "0.186.0",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "playwright": "1.63.0",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}
