@@ -4,23 +4,25 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M1.1 Project setup
+**Current task:** M2.1 Full humanoid rig
+
+Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
 ## M1 — Foundation
 
-- [ ] M1.1 Project setup: Vite, strict TypeScript, ESLint, Prettier, Vitest, Playwright, npm scripts
-- [ ] M1.2 Core contracts (`src/core/types.ts`) and `src/content/tuning.ts`
-- [ ] M1.3 Core utilities: seeded RNG, noise, math, tween, event bus, URL config, save with migration
-- [ ] M1.4 Fixed-timestep game loop (60 Hz + interpolation) and scene manager
-- [ ] M1.5 Input: intents, keyboard, gamepad manager, player slots, glyphs
-- [ ] M1.6 Low-res pipeline: 640×360 target, whole-number upscale, resize and devicePixelRatio
-- [ ] M1.7 Palettes, OKLab lookup quantization, Bayer dither, emissive bloom, vignette
-- [ ] M1.8 Pixel-stable camera (texel snapping + sub-texel screen offset), framing, shake
-- [ ] M1.9 Toon shading, geometry kit, builder API, merging and instancing
-- [ ] M1.10 Test street block with procedural props, pooled lights, fog
-- [ ] M1.11 Snow particles (instanced, wind-driven)
-- [ ] M1.12 One character walking with gamepad and keyboard
-- [ ] M1.13 Exit: unit tests, palette test, shimmer test pass; 1080p and 1440p screenshots reviewed
+- [x] M1.1 Project setup: Vite, strict TypeScript, ESLint, Prettier, Vitest, Playwright, npm scripts
+- [x] M1.2 Core contracts (`src/core/types.ts`) and `src/content/tuning.ts`
+- [x] M1.3 Core utilities: seeded RNG, noise, math, tween, event bus, URL config, save with migration
+- [x] M1.4 Fixed-timestep game loop (60 Hz + interpolation) and scene manager
+- [x] M1.5 Input: intents, keyboard, gamepad manager, player slots, glyphs
+- [x] M1.6 Low-res pipeline: 640×360 target, whole-number upscale, resize and devicePixelRatio
+- [x] M1.7 Palettes, OKLab lookup quantization, Bayer dither, emissive bloom, vignette
+- [x] M1.8 Pixel-stable camera (texel snapping + sub-texel screen offset), framing, shake
+- [x] M1.9 Toon shading, geometry kit, builder API, merging and instancing
+- [x] M1.10 Test street block with procedural props, pooled lights, fog
+- [x] M1.11 Snow particles (instanced, wind-driven)
+- [x] M1.12 One character walking with gamepad and keyboard
+- [x] M1.13 Exit: unit tests, palette test, shimmer test pass; 1080p and 1440p screenshots reviewed
 
 ## M2 — Characters and co-op input
 
