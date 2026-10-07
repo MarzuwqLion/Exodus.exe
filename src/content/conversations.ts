@@ -486,6 +486,7 @@ export const JUNE_EPILOGUE: JuneEpilogue = {
   left: "June left the party on the road south. Lantern says she's still conducting, under a different name.",
   wentHome:
     'June went home to her mother. She keeps her phone on at night, in case the network calls. It does.',
+  quay: 'June stayed on the quay until the Sankofa cleared the channel. She was back on the road north by noon.',
 };
 
 // ---------------------------------------------------------------------------------------------

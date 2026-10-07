@@ -289,7 +289,10 @@ export class Game {
         }
       }
     }
-    if (!this.pause) this.scenes.tick(dt);
+    if (!this.pause) {
+      this.scenes.tick(dt);
+      this.flow?.addPlayTime(dt);
+    }
     this.lastTickCost += performance.now() - t0;
   }
 
