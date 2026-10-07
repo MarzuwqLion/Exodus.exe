@@ -3,6 +3,7 @@
  * runner, the palette test, the shimmer test, and the benchmark.
  */
 import type { Game } from './game';
+import { emptyIntent } from './input/intents';
 import { EPILOGUE, MAIN, countOffPalette, type PaletteData } from './render/palettes';
 
 export interface ShimmerResult {
@@ -32,7 +33,20 @@ export interface ExodusQa {
   shimmer(steps: number, stepTexels: number, opts?: { vignette?: boolean; fog?: boolean }): ShimmerResult;
   runTicks(n: number): void;
   renderNow(): void;
+  /** Start sampling every frame; with `move`, both players wander the stop on scripted sticks. */
+  benchStart(move: boolean): void;
+  /** Stop sampling: per-frame samples of the frame interval, CPU time, draw calls, triangles, lights, heap. */
+  benchStop(): BenchSamples;
   game: Game;
+}
+
+export interface BenchSamples {
+  intervalMs: number[];
+  cpuMs: number[];
+  calls: number[];
+  triangles: number[];
+  lights: number[];
+  heapMb: number[];
 }
 
 declare global {
@@ -74,8 +88,43 @@ export function installQaHooks(game: Game): void {
       shimmerTest(game, steps, stepTexels, opts?.vignette ?? false, opts?.fog ?? false),
     runTicks: (n) => game.runTicks(n),
     renderNow: () => game.renderNow(),
+    benchStart: (move) => {
+      const s: BenchSamples = { intervalMs: [], cpuMs: [], calls: [], triangles: [], lights: [], heapMb: [] };
+      bench = s;
+      let t = 0;
+      const sticks = [emptyIntent(), emptyIntent()];
+      game.onFrame = (g, dt) => {
+        t += dt;
+        if (move) {
+          // Two players wander in slow loops, now and then breaking into a run.
+          sticks.forEach((it, i) => {
+            const a = t * (0.35 + i * 0.13) + i * 2.1;
+            it.move.x = Math.cos(a) * 0.9;
+            it.move.y = Math.sin(a * 1.3) * 0.9;
+            it.sprint = Math.sin(t * 0.7 + i) > 0.6;
+            g.input.setOverride(i as 0 | 1, it);
+          });
+        }
+        const st = g.pipeline.stats();
+        s.intervalMs.push(dt * 1000);
+        s.cpuMs.push(g.frameMs);
+        s.calls.push(st.calls);
+        s.triangles.push(st.triangles);
+        s.lights.push(Number(g.scenes.current?.debugInfo?.().lights ?? 0));
+        const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+        s.heapMb.push(mem ? mem.usedJSHeapSize / (1024 * 1024) : 0);
+      };
+    },
+    benchStop: () => {
+      game.onFrame = null;
+      game.input.setOverride(0, null);
+      game.input.setOverride(1, null);
+      return bench ?? { intervalMs: [], cpuMs: [], calls: [], triangles: [], lights: [], heapMb: [] };
+    },
   };
 }
+
+let bench: BenchSamples | null = null;
 
 function shimmerTest(
   game: Game,

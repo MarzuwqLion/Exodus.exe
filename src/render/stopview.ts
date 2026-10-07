@@ -30,7 +30,7 @@ function animFor(a: Activity): AnimName {
 const RAYS = 14;
 
 /** A fan on the ground: observer cones and drone searchlights. */
-class ConeFan {
+export class ConeFan {
   readonly mesh: THREE.Mesh;
   private pos: Float32Array;
   private mat: THREE.MeshBasicMaterial;
@@ -62,9 +62,9 @@ class ConeFan {
     this.mat.opacity = opacity;
   }
 
-  /** Rebuild the fan from (x, y) facing `facing`, clipped by sight. */
+  /** Rebuild the fan from (x, y) facing `facing`, clipped by sight (needs the stop's grid to clip). */
   update(
-    sim: StopSim,
+    sim: StopSim | null,
     x: number,
     y: number,
     facing: number,
@@ -77,7 +77,7 @@ class ConeFan {
     for (let i = 0; i <= RAYS; i++) {
       const a = facing - half + (i / RAYS) * half * 2;
       let r = range;
-      if (clip) {
+      if (clip && sim) {
         // March the ray until the first opaque tile.
         for (let d = 0.5; d <= range; d += 0.35) {
           if (sim.grid.opaque(Math.floor(x + Math.cos(a) * d), Math.floor(y + Math.sin(a) * d))) {

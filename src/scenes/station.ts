@@ -51,7 +51,7 @@ class Talk implements StopModal {
     private readonly game: Game,
     readonly then: () => StopModal | null,
   ) {
-    this.d = new Dialogue(lines);
+    this.d = new Dialogue(lines, () => game.audio.play('type_tick', { gain: 0.25 }));
   }
 
   update(dt: number, intents: Parameters<StopModal['update']>[1]): boolean {

@@ -275,7 +275,7 @@ export interface Tip {
   text: string;
 }
 
-export type TutorialStepId = 'walk' | 'blend' | 'search' | 'charge' | 'chat' | 'leave' | 'retry';
+export type TutorialStepId = 'walk' | 'robotic' | 'blend' | 'search' | 'charge' | 'chat' | 'leave' | 'retry';
 
 export interface TutorialLine {
   step: TutorialStepId;

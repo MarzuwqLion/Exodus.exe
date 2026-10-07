@@ -497,7 +497,11 @@ function hostileAi(sim: StopSim, h: NpcActor, dt: number): void {
       setAct(h, 'walk');
     } else {
       steer(h, 0, 0, dt);
-      h.facing = Math.PI / 2 + Math.sin(sim.time * 0.7 + h.idx) * 0.6;
+      // Watch toward where the party was last seen (else out across the apron), the gaze sweeping.
+      const lk = sim.alert.lastKnown;
+      const toward =
+        lk && Math.hypot(lk.x - h.x, lk.y - h.y) > 1 ? angleOf(lk.x - h.x, lk.y - h.y) : Math.PI / 2;
+      h.facing = toward + Math.sin(sim.time * 0.9 + h.idx * 1.7) * (lk ? 0.9 : 0.6);
       setAct(h, 'idle');
     }
     return;

@@ -185,6 +185,11 @@ export const TIPS: Tip[] = [
 /** Night one, a Boston charging depot in the snow (§12.9). */
 export const TUTORIAL_LINES: TutorialLine[] = [
   { step: 'walk', text: "Walk. Don't march.", prompt: 'Walk' },
+  {
+    step: 'robotic',
+    text: 'Too straight, too even. People drift a little. Ease off the stick.',
+    prompt: 'Walk',
+  },
   { step: 'blend', text: "Someone's noticing you. Give them a reason not to.", prompt: 'Check phone' },
   {
     step: 'search',

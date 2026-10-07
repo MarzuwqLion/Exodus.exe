@@ -137,7 +137,9 @@ export class VoyageScene implements GameScene {
     this.rig.teleport(FOCUS.x, FOCUS.z, FOCUS.zoom);
     const conv = voyageFor(aboard);
     const lines = [{ speaker: 'mensah' as const, text: MENSAH_DECK_LINE }, ...(conv?.lines ?? [])];
-    this.talk = new Dialogue(dialogueLines(lines, C.amber2, C.fog0));
+    this.talk = new Dialogue(dialogueLines(lines, C.amber2, C.fog0), () =>
+      this.game.audio.play('type_tick', { gain: 0.2 }),
+    );
   }
 
   private buildClouds(rng: Rng): void {

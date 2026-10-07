@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M6.6 Exit: a scripted full run reaches Ghana headless; the economy simulator on the real Port
+**Current task:** M7.3–M7.8 Presentation: transitions, audio, settings, juice, the art pass and the screenshot gallery
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -83,12 +83,12 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 - [x] M6.3 Ghana ending, epilogue lines, stats screen
 - [x] M6.4 Both game overs
 - [x] M6.5 Memory cores and unlocks
-- [ ] M6.6 Exit: Port bot band passes; a scripted full run reaches Ghana headless
+- [x] M6.6 Exit: Port bot band passes; a scripted full run reaches Ghana headless
 
 ## M7 — Presentation and polish
 
-- [ ] M7.1 Title, join, intro
-- [ ] M7.2 Tutorial and first-time tips
+- [x] M7.1 Title, join, intro
+- [x] M7.2 Tutorial and first-time tips
 - [ ] M7.3 Transitions (pixel dissolve, scanline wipe)
 - [ ] M7.4 Full procedural audio, music layers, override loader
 - [ ] M7.5 Settings and pause menu
@@ -98,7 +98,7 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## M8 — QA, performance, and documentation
 
-- [ ] M8.1 Debug overlay, hotkeys, scene jumps (§17.6)
+- [x] M8.1 Debug overlay, hotkeys, scene jumps (§17.6)
 - [ ] M8.2 Performance benchmark; budgets pass
 - [ ] M8.3 README.md and qa/CHECKLIST.md
 - [ ] M8.4 Final full-spec audit and qa/FINAL_REPORT.md

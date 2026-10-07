@@ -197,7 +197,9 @@ function freeControl(sim: StopSim, m: MemberActor, it: PlayerIntent, dt: number)
     return;
   }
   if (it.blendTap) {
-    startBlend(sim, m, bestBlend(sim, m));
+    const alt = findInteraction(sim, m)?.alt;
+    if (alt && !alt.disabled) startInteraction(sim, m, alt);
+    else startBlend(sim, m, bestBlend(sim, m));
     return;
   }
   if (it.ping) {

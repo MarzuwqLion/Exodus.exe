@@ -406,6 +406,8 @@ export type SimEvent =
   | { t: 'flash' }
   | { t: 'horn' }
   | { t: 'gate' }
+  /** Night one: a tutorial step begins (or the robotic-movement explanation). */
+  | { t: 'tutorial'; step: string }
   /** A party member talks to a Station keeper. */
   | { t: 'talk'; npc: number; member: number }
   | { t: 'exit' };

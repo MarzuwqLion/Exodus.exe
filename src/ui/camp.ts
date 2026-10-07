@@ -133,6 +133,11 @@ export class CampPanel {
     run.control[slot] = choices[(i + d + choices.length) % choices.length];
   }
 
+  /** Close camp with a short rest (debug skip). */
+  skip(): void {
+    if (!this.done) this.finish(false);
+  }
+
   private finish(long: boolean): void {
     if (long) longRest(this.run, this.atStation);
     this.done = true;

@@ -25,6 +25,8 @@ export interface TextOpts {
   align?: Align;
   /** Draw a 1px drop shadow in this color (default night0). Pass null for none. */
   shadow?: number | null;
+  /** Whole-number pixel scale (the title logo). */
+  scale?: number;
 }
 
 function hex(c: number): string {
@@ -167,19 +169,20 @@ export class UiSurface {
   /** Draw one line of text; returns its width. `y` is the top of the glyph cell. */
   text(str: string, x: number, y: number, color: number, opts?: TextOpts): number {
     const font = this.fontOf(opts);
-    const w = measure(font, str);
+    const k = Math.max(1, Math.round(opts?.scale ?? 1));
+    const w = measure(font, str) * k;
     let cx = Math.round(x);
     const align = opts?.align ?? 'left';
     if (align === 'center') cx = Math.round(x - w / 2);
     else if (align === 'right') cx = Math.round(x - w);
     const cy = Math.round(y);
     const shadow = opts?.shadow === undefined ? C.night0 : opts.shadow;
-    if (shadow !== null) this.drawRun(font, str, cx + 1, cy + 1, shadow);
-    this.drawRun(font, str, cx, cy, color);
+    if (shadow !== null) this.drawRun(font, str, cx + k, cy + k, shadow, k);
+    this.drawRun(font, str, cx, cy, color, k);
     return w;
   }
 
-  private drawRun(font: BitmapFont, str: string, x: number, y: number, color: number): void {
+  private drawRun(font: BitmapFont, str: string, x: number, y: number, color: number, k = 1): void {
     const a = this.atlas(font, color);
     let cx = x;
     for (const ch of str) {
@@ -187,9 +190,9 @@ export class UiSurface {
       const g = font.glyphs.get(key) ?? font.fallback;
       const sx = a.x.get(key);
       if (sx !== undefined && g.w > 0 && key !== ' ') {
-        this.ctx.drawImage(a.canvas, sx, 0, g.w, font.height, cx, y, g.w, font.height);
+        this.ctx.drawImage(a.canvas, sx, 0, g.w, font.height, cx, y, g.w * k, font.height * k);
       }
-      cx += g.w + font.spacing;
+      cx += (g.w + font.spacing) * k;
     }
   }
 

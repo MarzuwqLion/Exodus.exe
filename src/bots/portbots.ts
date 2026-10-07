@@ -203,8 +203,20 @@ export class PortBot {
     if (behindGate(m) && !port.gatePassed.has(m.idx)) {
       const arch = findInteraction(sim, m);
       if (arch?.kind === 'arch') {
+        // A player breathes better than the AI: if the Papers won't cover everyone still behind the gate, take
+        // the scan and leave them for the others.
+        const behind = sim.members.filter(
+          (o) =>
+            o !== m &&
+            sim.available(o) &&
+            o.state.kind === 'android' &&
+            behindGate(o) &&
+            !port.gatePassed.has(o.idx),
+        ).length;
+        const scanMyself = !!arch.alt && sim.resources.papers < behind + 1;
         if (!arch.disabled && this.pressCd <= 0) {
-          it.interact = true;
+          if (scanMyself) it.blendTap = true;
+          else it.interact = true;
           this.pressCd = 0.4;
         } else if (arch.disabled && arch.disabled !== 'Someone is being scanned') {
           this.go(sim, m, deck, it, false, run);
@@ -316,6 +328,8 @@ export interface PortRunOpts {
   /** Captain Mensah's part was delivered. */
   mensah?: boolean;
   papers?: number;
+  /** One android arrives nearly flat (in low power: half speed, no sprint). */
+  lowPower?: boolean;
   patch?: (cfg: StopConfig) => void;
 }
 
@@ -333,11 +347,12 @@ export interface PortRunResult {
 export function portConfigFor(o: PortRunOpts): StopConfig {
   const control: Record<Slot, MemberId | null> = { 0: 'wren', 1: o.players === 2 ? 'brick' : null };
   const party = startingParty();
-  // Arriving at the end of the road: a leg's Battery gone and the wear of nine legs.
-  for (const m of party) {
-    if (m.kind !== 'android') continue;
-    m.battery -= TUNING.battery.perLeg;
-    m.integrity = Math.max(30, m.integrity - 25);
+  // Arriving at the end of the road: a leg's Battery gone. Careful parties arrive in good repair (the economy
+  // simulator measures their lowest Integrity on arrival at about 90), so Integrity stays where it starts.
+  for (const m of party) if (m.kind === 'android') m.battery -= TUNING.battery.perLeg;
+  if (o.lowPower) {
+    const last = [...party].reverse().find((m) => m.kind === 'android');
+    if (last && last.kind === 'android') last.battery = TUNING.charging.lowBattery - 5;
   }
   const resources = startingResources();
   if (o.papers !== undefined) resources.papers = o.papers;
@@ -355,6 +370,20 @@ export function portConfigFor(o: PortRunOpts): StopConfig {
   };
   o.patch?.(cfg);
   return cfg;
+}
+
+/** Play the Port from a run's own configuration: returns its outcome (null only if the clock never ran out). */
+export function playPort(cfg: StopConfig, seed: number): StopOutcome | null {
+  const sim = new StopSim(cfg);
+  const bots = [new PortBot(0, seed * 7 + 1)];
+  if (cfg.control[1]) bots.push(new PortBot(1, seed * 7 + 2));
+  const limit = (TUNING.port.realSeconds + 30) * 60;
+  for (let t = 0; t < limit && !sim.outcome; t++) {
+    const intents: Partial<Record<Slot, PlayerIntent>> = {};
+    for (const b of bots) intents[b.slot] = b.decide(sim);
+    sim.step(intents);
+  }
+  return sim.outcome;
 }
 
 export function runPortBots(o: PortRunOpts): PortRunResult {

@@ -303,6 +303,14 @@ export class DriveScene implements GameScene {
     this.particles.update(dt, this.rig.camera, this.rig.focus.x, this.rig.focus.z, this.rig.zoom);
   }
 
+  /** F3: arrive now. */
+  debugSkip(): void {
+    if (this.done) return;
+    this.done = true;
+    this.panel = null;
+    this.flow.arrive();
+  }
+
   world(): WorldView {
     return { scene: this.scene, rig: this.rig };
   }

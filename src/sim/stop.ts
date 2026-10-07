@@ -40,6 +40,7 @@ import { updateBehaviors } from './behaviors';
 import { perceive } from './perception';
 import { integrate, separate, type Mover } from './movement';
 import { setupPort, updatePort, type PortVehicle } from './port';
+import { newTutorial, updateTutorial, type TutorialState, type TutorialStep } from './tutorial';
 
 export interface PortRules {
   /** Real seconds for the dawn clock (4:50 → 6:00). */
@@ -64,6 +65,8 @@ export interface StopConfig {
   juneKioskUses?: number;
   /** Tutorial scripting (Boston, night one). */
   tutorial?: boolean;
+  /** The tutorial step to start from (a restart after an ALERT). */
+  tutorialFrom?: TutorialStep;
   /** Disable the patrol clock (tests). */
   noPatrol?: boolean;
   port?: PortRules;
@@ -211,6 +214,8 @@ export class StopSim {
   };
   /** Per-tick intents (read by subsystems). */
   readonly intents: Record<Slot, PlayerIntent | null> = { 0: null, 1: null };
+  /** Night one's director (null outside the tutorial). */
+  readonly tutorial: TutorialState | null;
   /** Tutorial hooks read by the tutorial controller. */
   readonly tutorialLog = {
     blended: 0,
@@ -257,6 +262,7 @@ export class StopSim {
           holdSaidAt: -Infinity,
         }
       : null;
+    this.tutorial = cfg.tutorial ? newTutorial(cfg.tutorialFrom) : null;
     this.setupMembers();
     this.setupContainers();
     this.setupFixtures();
@@ -285,6 +291,14 @@ export class StopSim {
           this.grid.dynBlock[this.grid.idx(tx, ty)] = 1;
       }
     }
+  }
+
+  /** Debug (F6): switch the weather mid-stop. */
+  setWeather(w: Weather): void {
+    this.cfg.weather = w;
+    this.rangeMult = 1;
+    this.hearMult = 1;
+    this.setupWeather();
   }
 
   private setupWeather(): void {
@@ -648,6 +662,7 @@ export class StopSim {
     this.updateHeavies(dt);
     this.updateExit(dt);
     if (this.port) updatePort(this, dt);
+    if (this.tutorial) updateTutorial(this, this.tutorial);
   }
 
   private updateWeather(dt: number): void {

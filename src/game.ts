@@ -60,6 +60,8 @@ export class Game {
   pause: PauseState | null = null;
   /** The run in progress (its flow between scenes), if any. */
   flow: RunFlow | null = null;
+  /** Called after every rendered frame (the benchmark's sampler). */
+  onFrame: ((game: Game, frameDt: number) => void) | null = null;
   private registry = new Map<string, SceneFactory>();
   private blackScene = new THREE.Scene();
   private blackRig = new CameraRig();
@@ -171,6 +173,7 @@ export class Game {
       if (this.hidden) return;
       const dt = this.lastFrameT < 0 ? 1 / 60 : Math.min(0.25, (t - this.lastFrameT) / 1000);
       this.lastFrameT = t;
+      this.debugHotkeys();
       this.input.poll(dt);
       this.updateCursor();
       this.loop.advance(t);
@@ -363,6 +366,7 @@ export class Game {
     this.tickMs = this.lastTickCost;
     this.lastTickCost = 0;
     if (frameDt > 0) this.fps = this.fps * 0.95 + (1 / frameDt) * 0.05;
+    this.onFrame?.(this, frameDt);
   }
 
   private drawPause(): void {
@@ -408,6 +412,22 @@ export class Game {
     p.menu.draw(ui, cx - w / 2 + 12, top + 22, w - 24);
   }
 
+  /** Debug hotkeys (spec §17.6), with ?debug=1 or in a development build. */
+  private debugHotkeys(): void {
+    if (!this.config.debug && !import.meta.env.DEV) return;
+    const kb = this.input.kb;
+    const scene = this.scenes.current;
+    if (kb.wasPressed('F1')) this.debug = !this.debug;
+    if (kb.wasPressed('F3')) scene?.debugSkip?.();
+    if (kb.wasPressed('F7')) {
+      const rig = scene?.world()?.rig;
+      if (rig) rig.snap = !rig.snap;
+    }
+    if (kb.wasPressed('F8')) this.pipeline.paletteDebug = !this.pipeline.paletteDebug;
+    if (kb.wasPressed('F9') && this.flow) this.flow.run.day += 1;
+    for (const k of ['F2', 'F4', 'F5', 'F6']) if (kb.wasPressed(k)) scene?.debugKey?.(k);
+  }
+
   private drawDebug(): void {
     if (!this.debug) return;
     const ui = this.ui;
@@ -416,6 +436,11 @@ export class Game {
       `fps ${Math.round(this.fps)}  frame ${this.frameMs.toFixed(1)}ms  tick ${this.tickMs.toFixed(2)}ms`,
       `calls ${st.calls}  tris ${st.triangles}`,
     ];
+    if (this.flow) {
+      const run = this.flow.run;
+      const days = TUNING.run.shipDay - run.day;
+      lines.push(`run seed ${run.seed}  day ${run.day} (${days} to sailing)  Heat ${run.heat.toFixed(2)}`);
+    }
     const info = this.scenes.current?.debugInfo?.() ?? {};
     for (const [k, v] of Object.entries(info)) lines.push(`${k} ${v}`);
     let y = ui.height - 4 - lines.length * 10;

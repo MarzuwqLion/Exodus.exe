@@ -36,4 +36,8 @@ export interface GameScene extends SceneLike {
   partyLines?(): string[];
   /** Debug/QA hooks. */
   debugInfo?(): Record<string, string | number>;
+  /** A debug hotkey for this scene (F2 resources, F4 ALERT, F5 Integrity 10, F6 weather; spec §17.6). */
+  debugKey?(key: string): void;
+  /** F3: skip ahead to the next scene. */
+  debugSkip?(): void;
 }

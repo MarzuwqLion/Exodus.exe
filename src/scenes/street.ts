@@ -21,7 +21,7 @@ import { Particles } from '../render/particles';
 import type { UiSurface } from '../ui/surface';
 import type { GameScene, WorldView } from './scene';
 
-function buildBlock(k: Kit): void {
+export function buildBlock(k: Kit): void {
   // Ground: road, curb, sidewalk, plowed snow edges.
   k.ground(-40, -30, 40, 30, 0, C.night2);
   k.ground(-40, -2, 40, 9, 0.002, C.night3);

@@ -81,6 +81,7 @@ export class CheckpointScene implements GameScene {
     private readonly game: Game,
     private readonly flow: RunFlow,
   ) {
+    flow.tip('first-checkpoint');
     const run = flow.run;
     const node = currentNode(run.map);
     this.rng = new Rng(hashSeed('checkpoint', run.seed, run.leg));
@@ -358,6 +359,11 @@ export class CheckpointScene implements GameScene {
     this.rig.follow(21, 11.5, dt > 0 ? dt : 1 / 60, 0.9);
     this.lights.update(this.rig.focus.x, this.rig.focus.z, this.time);
     this.particles.update(dt, this.rig.camera, this.rig.focus.x, this.rig.focus.z, this.rig.zoom);
+  }
+
+  /** F3: the guard waves them through. */
+  debugSkip(): void {
+    if (this.phase !== 'pass' && this.phase !== 'bust') this.setPhase('pass');
   }
 
   world(): WorldView {

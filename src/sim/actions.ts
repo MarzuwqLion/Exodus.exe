@@ -43,6 +43,8 @@ export interface Interaction {
   y: number;
   /** Shown but unusable (e.g. "Plug in" without Papers or a hack). */
   disabled?: string;
+  /** A second choice on the Blend button (X): at the Port's arch, take the scan and keep the Papers. */
+  alt?: Interaction;
 }
 
 const REACH = 1.45;
@@ -373,7 +375,7 @@ export function startInteraction(sim: StopSim, m: MemberActor, it: Interaction):
       return;
     case 'arch':
       m.vx = m.vy = 0;
-      useArch(sim, m);
+      useArch(sim, m, it.target === 1);
       return;
     case 'search':
     case 'pry':

@@ -17,13 +17,20 @@ export interface DialogueLine {
 /** Characters per second for typed text. */
 export const TYPE_CPS = 48;
 
+/** Typed text ticks every this many characters (spec §14.2: typewriter ticks). */
+export const TICK_EVERY = 3;
+
 export class Dialogue {
   private i = 0;
   private shown = 0;
   private t = 0;
   done = false;
 
-  constructor(private readonly lines: readonly DialogueLine[]) {
+  constructor(
+    private readonly lines: readonly DialogueLine[],
+    /** Called every few typed characters (the scene plays the typewriter tick). */
+    private readonly onType: (() => void) | null = null,
+  ) {
     if (lines.length === 0) this.done = true;
   }
 
@@ -36,7 +43,9 @@ export class Dialogue {
     if (this.done) return true;
     const line = this.lines[this.i];
     this.t += dt;
+    const before = Math.floor(this.shown / TICK_EVERY);
     this.shown = Math.min(line.text.length, this.shown + dt * TYPE_CPS);
+    if (Math.floor(this.shown / TICK_EVERY) > before) this.onType?.();
     if (intents.some((it) => it?.cancel)) {
       this.done = true;
       return true;

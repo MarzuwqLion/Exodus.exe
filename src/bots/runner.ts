@@ -62,17 +62,38 @@ export function stopConfigFor(o: StopRunOpts): StopConfig {
   return cfg;
 }
 
+/**
+ * The bots for a stop. Two players split the work the way a sensible team would: Brick's heavy steps make him
+ * a poor sneak in a crowded diner, so there Wren searches while he sits; at depots and gas stations he works
+ * the lockers.
+ */
+function stopBots(kind: StopBotKind, players: 1 | 2, layoutKind: string, seed: number): StopBot[] {
+  const brickSearches = layoutKind !== 'diner';
+  const r0 = players === 2 ? (brickSearches ? 'charger' : 'searcher') : 'solo';
+  const r1 = brickSearches ? 'searcher' : 'charger';
+  const bots: StopBot[] = [new StopBot(kind, 0, r0, seed * 7 + 1)];
+  if (players === 2) bots.push(new StopBot(kind, 1, r1, seed * 7 + 2));
+  return bots;
+}
+
+/** Play a stop from a given configuration (a run's own stop): returns its outcome, or null on a timeout. */
+export function playStop(cfg: StopConfig, kind: StopBotKind, seed: number): StopOutcome | null {
+  const sim = new StopSim(cfg);
+  const bots = stopBots(kind, cfg.control[1] ? 2 : 1, cfg.layout.kind, seed);
+  const limit = BOT_LIMIT_SECONDS * 60;
+  for (let t = 0; t < limit && !sim.outcome; t++) {
+    const intents: Partial<Record<Slot, ReturnType<StopBot['decide']>>> = {};
+    for (const b of bots) intents[b.slot] = b.decide(sim);
+    sim.step(intents);
+  }
+  return sim.outcome;
+}
+
 export function runStopBots(o: StopRunOpts): StopRunResult {
   const cfg = stopConfigFor(o);
   const sim = new StopSim(cfg);
   const car0 = sim.resources.carBattery;
-  // Two players split the work the way a sensible team would: Brick's heavy steps make him a poor sneak in a
-  // crowded diner, so there Wren searches while he sits; at depots and gas stations he works the lockers.
-  const brickSearches = o.layout.kind !== 'diner';
-  const r0 = o.players === 2 ? (brickSearches ? 'charger' : 'searcher') : 'solo';
-  const r1 = brickSearches ? 'searcher' : 'charger';
-  const bots: StopBot[] = [new StopBot(o.kind, 0, r0, o.seed * 7 + 1)];
-  if (o.players === 2) bots.push(new StopBot(o.kind, 1, r1, o.seed * 7 + 2));
+  const bots = stopBots(o.kind, o.players, o.layout.kind, o.seed);
   let alertAt: number | null = null;
   const limit = BOT_LIMIT_SECONDS * 60;
   for (let t = 0; t < limit && !sim.outcome; t++) {

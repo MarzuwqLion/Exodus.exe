@@ -264,11 +264,12 @@ export function archOffer(sim: StopSim, m: MemberActor): { verb: string; disable
   if (!port || port.gatePassed.has(m.idx)) return null;
   if (port.archScan >= 0) return { verb: 'Scanner arch', disabled: BUSY };
   const op = operatorOf(sim);
-  const waved = !!sim.cfg.port?.gateCrewSympathizers || !op || !sim.isActiveNpc(op);
   const need = archPapers(sim, m);
-  if (waved || need === 0) return { verb: 'Walk through' };
-  // ALERT shuts the gate: the yard's only other way out is the waterline path.
+  if (need === 0) return { verb: 'Walk through' };
+  // ALERT shuts the gate (even Mensah's friends can't open it then): the yard's only other way out is the
+  // waterline path. Otherwise her friends at the gate wave the party through, as does an empty booth.
   if (sim.alert.on) return { verb: 'Scanner arch', disabled: 'Locked down' };
+  if (sim.cfg.port?.gateCrewSympathizers || !op || !sim.isActiveNpc(op)) return { verb: 'Walk through' };
   if (sim.resources.papers >= need) return { verb: `Show Papers · ${need}` };
   if (m.carrying >= 0) return { verb: 'Scanner arch', disabled: `Needs ${need} Papers` };
   return { verb: 'Breathing scan' };
@@ -285,20 +286,30 @@ export function archInteraction(sim: StopSim, m: MemberActor): Interaction | nul
   const at = PORT_GEO.archSouth;
   if (!sim.port || dist(m, at) > TUNING.port.archReach) return null;
   const o = archOffer(sim, m);
-  return o ? { kind: 'arch', hold: 0, target: 0, x: at.x, y: at.y - 1, ...o } : null;
+  if (!o) return null;
+  const it: Interaction = { kind: 'arch', hold: 0, target: 0, x: at.x, y: at.y - 1, ...o };
+  // With Papers in hand, an android can still take the scan and save them for someone who breathes worse.
+  if (o.verb.startsWith('Show Papers') && m.carrying < 0 && m.state.kind === 'android')
+    it.alt = { kind: 'arch', hold: 0, target: ARCH_SCAN, x: it.x, y: it.y, verb: 'Breathing scan' };
+  return it;
 }
 
-/** Use the arch: walk through, show Papers, or start the 4 s breathing scan. */
-export function useArch(sim: StopSim, m: MemberActor): void {
+/** An arch interaction's target: show Papers if there are any (0), or take the scan anyway (1). */
+const ARCH_SCAN = 1;
+
+/** Use the arch: walk through, show Papers, or start the 4 s breathing scan (`scan`: even with Papers). */
+export function useArch(sim: StopSim, m: MemberActor, scan = false): void {
   const port = sim.port!;
-  const it = archInteraction(sim, m);
+  const base = archInteraction(sim, m);
+  const it = scan && base?.alt ? base.alt : base;
   if (!it || it.disabled) return;
   if (it.verb === 'Breathing scan') {
     const op = operatorOf(sim);
     if (!op) return;
     port.archScan = m.idx;
     beginScan(sim, op, m, false);
-    if (m.scan) m.scan.meter += TUNING.port.archScanPerHeat * Math.floor(sim.cfg.heat);
+    if (m.scan)
+      m.scan.meter += TUNING.port.archScanBase + TUNING.port.archScanPerHeat * Math.floor(sim.cfg.heat);
     return;
   }
   if (it.verb.startsWith('Show Papers')) {
@@ -461,10 +472,10 @@ export function updatePort(sim: StopSim, dt: number): void {
     if (ch === 'v' && sim.available(m)) board(sim, m);
   }
   if (!port.horn && port.clock >= P.hornAtMinutes) soundHorn(sim);
-  // ALERT before the horn: the terminal sends its Recyclers (2 + 1 per Heat level, like the van, §8.6).
+  // ALERT before the horn: the terminal turns out its Recyclers (more than a stop's van brings, + 1 per Heat).
   if (sim.alert.on && !port.alertForces) {
     port.alertForces = true;
-    if (!port.horn) terminalRecyclers(sim, TUNING.alert.baseRecyclers + Math.floor(sim.cfg.heat));
+    if (!port.horn) terminalRecyclers(sim, P.alertRecyclers + Math.floor(sim.cfg.heat));
   }
   // Captain Mensah calls them up the gangway when the first of them gets close (or tells them to clear the
   // dock first).

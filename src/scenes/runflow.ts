@@ -4,6 +4,7 @@
  * read it through `game.flow` and call back when they finish.
  */
 import type { LanternMessage } from '../content/schema';
+import { TIPS } from '../content/lantern';
 import { TUNING } from '../content/tuning';
 import { freshSeed } from '../core/rng';
 import type { MemberId, RunState, Slot } from '../core/types';
@@ -39,6 +40,8 @@ export class RunFlow {
   readonly phone = new LanternPhone();
   /** The leg's road event is still to come (the drive scene shows it). */
   pendingEvent = false;
+  /** Night one (the tutorial) comes before the first map (spec §12.1, §12.9). */
+  tutorialPending = false;
   /** Memory cores the run earned (spec §15), set once when the run ends. */
   award: CoreAward | null = null;
   /** Who sailed on the Sankofa, set when the ship sails. */
@@ -47,11 +50,17 @@ export class RunFlow {
   constructor(
     readonly game: Game,
     public run: RunState,
-  ) {}
+  ) {
+    this.phone.onMessage = () => game.audio.play('phone_buzz');
+    this.phone.onType = () => game.audio.play('type_tick', { gain: 0.25 });
+  }
 
   /** A new run from Boston with every unlocked perk: player 1 plays Wren; player 2 (if joined) Brick. */
-  static begin(game: Game, seed: number = game.config.seed ?? freshSeed()): RunFlow {
-    const control: Record<Slot, MemberId | null> = { 0: 'wren', 1: game.input.isJoined(1) ? 'brick' : null };
+  static begin(
+    game: Game,
+    seed: number = game.config.seed ?? freshSeed(),
+    control: Record<Slot, MemberId | null> = { 0: 'wren', 1: game.input.isJoined(1) ? 'brick' : null },
+  ): RunFlow {
     const run = newRun(seed, { control });
     applyPerks(run, game.save.meta.unlocked);
     const flow = new RunFlow(game, run);
@@ -75,6 +84,18 @@ export class RunFlow {
   /** Real play time for the stats screen (§16.2). It stops when the run ends. */
   addPlayTime(dt: number): void {
     if (this.run.phase !== 'ended') this.run.stats.playTimeMs += dt * 1000;
+  }
+
+  /** A first-time tip (spec §12.9): one Lantern line, shown once ever, unless tips are off. */
+  tip(id: string): void {
+    const g = this.game;
+    const meta = g.save.meta;
+    if (!g.save.settings.tips || meta.tipsShown.includes(id)) return;
+    const t = TIPS.find((x) => x.id === id);
+    if (!t) return;
+    meta.tipsShown.push(id);
+    g.persist();
+    this.phone.push(t.text);
   }
 
   say(msgs: readonly (LanternMessage | null)[]): void {

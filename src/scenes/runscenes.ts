@@ -36,6 +36,7 @@ export function runStopScene(
 /** A Station in a run: the keeper's care and trades, then camp in the keeper's light. */
 export function runStationScene(game: Game, flow: RunFlow): GameScene {
   const run = flow.run;
+  flow.tip('first-station');
   const node = currentNode(run.map);
   const keeper = keeperForColumn(node.column)!;
   return stationScene(game, {

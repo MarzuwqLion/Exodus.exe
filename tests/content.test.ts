@@ -87,6 +87,7 @@ const TIP_IDS = keysOf<TipId>({
 });
 const TUTORIAL_STEPS = keysOf<TutorialStepId>({
   walk: true,
+  robotic: true,
   blend: true,
   search: true,
   charge: true,

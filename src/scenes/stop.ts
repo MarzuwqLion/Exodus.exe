@@ -9,7 +9,7 @@ import type { LoopHandle } from '../audio/engine';
 import { MEMBERS } from '../content/characters';
 import { TUNING } from '../content/tuning';
 import { DEG } from '../core/math';
-import type { PlayerIntent, Region, Slot, Weather } from '../core/types';
+import { WEATHERS, type PlayerIntent, type Region, type Slot, type Weather } from '../core/types';
 import type { Game } from '../game';
 import { CameraRig } from '../render/camera';
 import { buildLevel, vendingMesh, type LevelBuild } from '../render/level';
@@ -20,6 +20,7 @@ import { buildWantedPosters } from '../render/posters';
 import { StopView } from '../render/stopview';
 import { postersUp } from '../sim/behaviors';
 import { F } from '../sim/grid';
+import { finishPort } from '../sim/port';
 import { StopSim, type StopConfig } from '../sim/stop';
 import type { SimEvent, StopOutcome } from '../sim/types';
 import { StopHud } from '../ui/hud';
@@ -311,6 +312,12 @@ export class StopScene implements GameScene {
           break;
         case 'searching':
           break;
+        case 'tip':
+          g.flow?.tip(e.id);
+          break;
+        case 'glitch':
+          g.flow?.tip('first-glitch');
+          break;
         case 'van':
           this.view.showVan(e.x, e.y);
           break;
@@ -526,8 +533,24 @@ export class StopScene implements GameScene {
       const a = this.titleT > 3 ? (3.5 - this.titleT) * 2 : Math.min(1, this.titleT);
       if (a > 0.3) ui.text(this.params.title, Math.floor(ui.width / 2), 44, C.fog1, { align: 'center' });
     }
+    if (this.game.debug) this.drawAwareness(ui);
     this.params.onDrawUi?.(this, ui);
     this.modal?.draw(ui);
+  }
+
+  /** Debug overlay: each observer's highest awareness over its head (spec §17.6). */
+  private drawAwareness(ui: UiSurface): void {
+    const sim = this.sim;
+    const p = { x: 0, y: 0 };
+    for (const n of sim.npcs) {
+      if (!sim.isActiveNpc(n)) continue;
+      const a = Math.max(0, ...Object.values(n.obs.awareness).map((v) => v ?? 0));
+      if (a < 1) continue;
+      const head = this.view.headOf(false, n.idx);
+      if (!head) continue;
+      this.rig.worldToLow(head.x, head.y + 0.4, head.z, p);
+      ui.text(`${Math.round(a)}`, p.x, p.y - 8, a >= 60 ? C.red1 : C.fog1, { align: 'center', font: 'num' });
+    }
   }
 
   partyLines(): string[] {
@@ -551,6 +574,32 @@ export class StopScene implements GameScene {
       }
     }
     return lines;
+  }
+
+  /** Debug hotkeys (spec §17.6): F2 resources, F4 ALERT, F5 Integrity 10, F6 cycle the weather. */
+  debugKey(key: string): void {
+    const sim = this.sim;
+    const m = sim.controlled(0) ?? sim.members[0];
+    if (!m) return;
+    if (key === 'F2') sim.gain({ cells: 50, parts: 5, papers: 5 }, m.x, m.y, '+50 Cells +5 Parts +5 Papers');
+    else if (key === 'F4') sim.raiseAlert({ x: m.x, y: m.y });
+    else if (key === 'F5') {
+      for (const x of sim.members) if (x.state.kind === 'android') x.state.integrity = 10;
+    } else if (key === 'F6') {
+      const next = WEATHERS[(WEATHERS.indexOf(sim.cfg.weather) + 1) % WEATHERS.length];
+      sim.setWeather(next);
+      this.particles.setWeather(next, sim.kind === 'station');
+      this.hud.floats.push({ text: next, x: m.x, y: 2.4, z: m.y, t: 0, color: C.fog1 });
+    }
+  }
+
+  /** F3: end the stop now (the car leaves, the party rests, or the ship sails). */
+  debugSkip(): void {
+    const sim = this.sim;
+    if (sim.outcome) return;
+    if (sim.port) finishPort(sim);
+    else if (sim.carCanLeave()) sim.leave();
+    else sim.finish(sim.kind === 'station' ? 'rested' : 'left', []);
   }
 
   debugInfo(): Record<string, string | number> {

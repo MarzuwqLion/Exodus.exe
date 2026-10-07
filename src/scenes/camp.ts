@@ -135,9 +135,16 @@ export class CampScene implements GameScene {
           ? { speaker: '', text: l.text, color: C.fog0 }
           : { speaker: MEMBERS[l.speaker].name, text: l.text, color: C.fog1 },
       );
-      this.talk = new Dialogue(lines);
+      this.talk = new Dialogue(lines, () => game.audio.play('type_tick', { gain: 0.25 }));
     }
     this.panel = new CampPanel(run, atStation, () => flow.campDone(atStation));
+    // The first time someone's Integrity is slipping (spec §12.9).
+    if (
+      run.party.some(
+        (m) => m.kind === 'android' && m.status === 'active' && m.integrity < TUNING.integrity.glitchBelow,
+      )
+    )
+      flow.tip('first-integrity');
   }
 
   enter(): void {
@@ -193,6 +200,12 @@ export class CampScene implements GameScene {
     this.rig.follow(-1.5, 0.8, dt > 0 ? dt : 1 / 60, 0.75);
     this.lights.update(this.rig.focus.x, this.rig.focus.z, this.time);
     this.particles.update(dt, this.rig.camera, this.rig.focus.x, this.rig.focus.z, this.rig.zoom);
+  }
+
+  /** F3: skip the talk and take a short rest. */
+  debugSkip(): void {
+    this.talk = null;
+    if (!this.panel.done) this.panel.skip();
   }
 
   world(): WorldView {

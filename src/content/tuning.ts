@@ -109,7 +109,7 @@ export const TUNING = {
     spoofedCharging: 11,
     staffZone: 8,
     /** At the Port: in the yard, on the waterline path, or on the apron without coming through the gate. */
-    portTrespass: 9,
+    portTrespass: 11,
     carryUnit: 40,
     stillnessStartSeconds: 4,
     stillnessRateStart: 5,
@@ -316,7 +316,7 @@ export const TUNING = {
   },
 
   battery: {
-    perLeg: 10,
+    perLeg: 12,
     walkPerLeg: 15,
     sprintPerSecond: 0.4,
     dash: 1.5,
@@ -444,8 +444,9 @@ export const TUNING = {
     gangwaySeconds: 60,
     baseRecyclers: 2,
     mensahParts: 2,
-    /** Recyclers who come out of the terminal when the horn sounds. */
+    /** Recyclers who come out of the terminal when the horn sounds, and (+1 per Heat level) at an ALERT. */
     hornRecyclers: 2,
+    alertRecyclers: 3,
     yardDrones: 1,
     waterlineDrones: 2,
     truckLength: 10,
@@ -460,7 +461,11 @@ export const TUNING = {
     craneLegOffset: 3.5,
     /** How close to the arch's front a member must stand to use it. */
     archReach: 1.3,
-    /** The arch's breathing scan starts this much warier per Heat level (like checkpoint guards, §11.6). */
+    /**
+     * The terminal's arch is a high-security scanner: its breathing scan starts this wary, and warier per Heat
+     * level (like checkpoint guards, §11.6).
+     */
+    archScanBase: 12,
     archScanPerHeat: 10,
     /** "They know you're coming": Recyclers posted across the gangway's foot, per Heat level. */
     berthGuardsPerHeat: 1,

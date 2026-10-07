@@ -429,7 +429,8 @@ export class StopHud {
       const prompts: [Glyph, string][] = [];
       const it = findInteraction(sim, m);
       if (it) prompts.push(['A', it.disabled ? `${it.verb}` : it.verb]);
-      if (m.mode === 'free' || m.mode === 'blend') {
+      if (it?.alt) prompts.push(['X', it.alt.verb]);
+      else if (m.mode === 'free' || m.mode === 'blend') {
         const best = blendsFor(sim, m)[0];
         if (
           best &&

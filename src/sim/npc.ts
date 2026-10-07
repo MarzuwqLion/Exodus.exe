@@ -46,7 +46,6 @@ export function newNpc(sim: StopSim, role: NpcRole, x: number, y: number): NpcAc
   if (!hostile && role !== 'keeper' && role !== 'crew' && role !== 'mensah') {
     symp = role === 'dockworker' ? O.dockSympathizerChance : O.sympathizerChance;
     if (sim.mods.has('sympatheticStaff') && kind === 'staff') symp = Math.max(symp, 0.45);
-    if (role === 'dockworker' && sim.cfg.port?.gateCrewSympathizers) symp = 0.6;
   }
   const C = TUNING.combat;
   const hp =

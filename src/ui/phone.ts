@@ -3,7 +3,7 @@
  * put away. Messages queue; tips and the tutorial use the same phone.
  */
 import { C } from '../render/palettes';
-import { TYPE_CPS } from './dialogue';
+import { TICK_EVERY, TYPE_CPS } from './dialogue';
 import type { UiSurface } from './surface';
 
 interface Showing {
@@ -15,6 +15,9 @@ interface Showing {
 export class LanternPhone {
   private queue: string[] = [];
   private cur: Showing | null = null;
+  /** Sound hooks (the run flow plugs in the audio): a buzz per message, a tick every few typed characters. */
+  onMessage: (() => void) | null = null;
+  onType: (() => void) | null = null;
 
   push(text: string): void {
     this.queue.push(text);
@@ -36,8 +39,12 @@ export class LanternPhone {
       // Typing time, then about a second per seven words, at least four seconds.
       const words = next.split(/\s+/).length;
       this.cur = { text: next, t: 0, hold: next.length / TYPE_CPS + Math.max(4, words / 7 + 2) };
+      this.onMessage?.();
     }
+    const before = Math.floor(Math.min(this.cur.text.length, this.cur.t * TYPE_CPS) / TICK_EVERY);
     this.cur.t += dt;
+    const after = Math.floor(Math.min(this.cur.text.length, this.cur.t * TYPE_CPS) / TICK_EVERY);
+    if (after > before) this.onType?.();
     if (this.cur.t >= this.cur.hold) this.cur = null;
   }
 

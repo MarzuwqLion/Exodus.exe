@@ -17,12 +17,24 @@ import { runStationScene, runStopScene } from './runscenes';
 import { compromisedScene, keeperForInterior, stationScene } from './station';
 import { StopScene } from './stop';
 import { StreetScene } from './street';
+import { TitleScene } from './title';
+import { JoinScene } from './join';
+import { IntroScene } from './intro';
+import { tutorialScene } from './tutorial';
+import type { TutorialStep } from '../sim/tutorial';
 import { VoyageScene } from './voyage';
 
 export function registerScenes(game: Game): void {
   game.register('street', (g) => new StreetScene(g));
-  game.register('boot', (g) => new StreetScene(g));
-  game.register('title', (g) => new StreetScene(g));
+  game.register('boot', (g) => new TitleScene(g));
+  game.register('title', (g) => new TitleScene(g));
+  game.register('join', (g) => new JoinScene(g));
+  game.register('intro', (g, p) => new IntroScene(g, p ?? { next: 'map' }));
+  game.register('tutorial', (g, p) => {
+    const flow = flowOf(g);
+    const from = (p?.from as TutorialStep | undefined) ?? 'walk';
+    return tutorialScene(g, flow, from);
+  });
   const titles: Record<string, string> = {
     depot: 'Charging depot',
     diner: 'Diner',
@@ -67,6 +79,22 @@ function jumpTo(flow: RunFlow, column: number): void {
   run.day = Math.max(run.day, column + 1);
 }
 
+/** QA jumps (?region=, ?weather=): put the run in that region's first ordinary town, in that weather. */
+function qaRegion(g: Game, flow: RunFlow): void {
+  const { region, weather } = g.config;
+  if (!region && !weather) return;
+  const run = flow.run;
+  if (region) {
+    const node = run.map.nodes.find(
+      (n) => n.region === region && n.type !== 'checkpoint' && n.type !== 'boston',
+    );
+    if (node) jumpTo(flow, node.column);
+    const here = run.map.nodes.find((n) => n.column === run.column && n.region === region);
+    if (here) run.map.current = here.id;
+  }
+  if (weather) currentNode(run.map).weather = weather;
+}
+
 function registerRunScenes(game: Game): void {
   game.register('run', (g) => new MapScene(g, flowOf(g)));
   game.register('map', (g) => new MapScene(g, flowOf(g)));
@@ -75,11 +103,16 @@ function registerRunScenes(game: Game): void {
     if (g.config.scene === 'drive' && flow.run.leg === 0) {
       const next = flow.run.map.nodes.find((n) => n.id === currentNode(flow.run.map).next[0])!;
       jumpTo(flow, next.column);
+      qaRegion(g, flow);
       flow.pendingEvent = true;
     }
     return new DriveScene(g, flow);
   });
-  game.register('camp', (g, p) => new CampScene(g, flowOf(g), !!p?.station));
+  game.register('camp', (g, p) => {
+    const flow = flowOf(g);
+    if (g.config.scene === 'camp') qaRegion(g, flow);
+    return new CampScene(g, flow, !!p?.station);
+  });
   game.register('checkpoint', (g) => {
     const flow = flowOf(g);
     if (g.config.scene === 'checkpoint' && currentNode(flow.run.map).type !== 'checkpoint') jumpTo(flow, 4);

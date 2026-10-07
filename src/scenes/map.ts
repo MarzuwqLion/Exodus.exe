@@ -260,6 +260,12 @@ export class MapScene implements GameScene {
     this.particles.update(dt, this.rig.camera, this.rig.focus.x, this.rig.focus.z, this.rig.zoom);
   }
 
+  /** F3: set out for the first town ahead. */
+  debugSkip(): void {
+    const next = nextNodes(this.flow.run.map)[0];
+    if (next) this.flow.go(next.id);
+  }
+
   world(): WorldView {
     return { scene: this.scene, rig: this.rig };
   }
