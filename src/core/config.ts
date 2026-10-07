@@ -19,6 +19,9 @@ export const SCENE_NAMES = [
   'voyage',
   'ending',
   'gameover',
+  // QA-only scenes
+  'street',
+  'lot',
 ] as const;
 export type SceneName = (typeof SCENE_NAMES)[number];
 

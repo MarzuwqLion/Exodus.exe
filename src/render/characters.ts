@@ -169,16 +169,16 @@ export class CharacterRenderer {
   }
 
   private seamMatrix(ch: CharInstance, b: BoxDef, out: THREE.Matrix4): void {
-    const t = 0.07;
+    const t = 0.11;
     if (b.tag === 'face') {
       // Face plate: a red eye line across the front of the head.
-      _pos.set(b.offset[0], b.offset[1] + 0.03, b.offset[2] + b.size[2] / 2 + 0.005);
+      _pos.set(b.offset[0], b.offset[1] + 0.03, b.offset[2] + b.size[2] / 2 + 0.02);
       _scale.set(b.size[0] * 0.7, t * 0.8, t * 0.5);
     } else if (b.seam === 'h') {
-      _pos.set(b.offset[0], b.offset[1], b.offset[2] + b.size[2] / 2 + 0.005);
+      _pos.set(b.offset[0], b.offset[1], b.offset[2] + b.size[2] / 2 + 0.02);
       _scale.set(b.size[0] * 0.95, t * 0.7, t * 0.5);
     } else {
-      _pos.set(b.offset[0] + b.size[0] * 0.18, b.offset[1], b.offset[2] + b.size[2] / 2 + 0.005);
+      _pos.set(b.offset[0] + b.size[0] * 0.18, b.offset[1], b.offset[2] + b.size[2] / 2 + 0.02);
       _scale.set(t * 0.7, b.size[1] * 0.85, t * 0.5);
     }
     _quat.identity();

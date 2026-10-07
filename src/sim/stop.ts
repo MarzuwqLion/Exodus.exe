@@ -222,6 +222,7 @@ export class StopSim {
     this.juneKioskUses = cfg.juneKioskUses ?? 0;
     this.exitTiles = this.layout.exitTiles;
     this.exitField = this.grid.distanceField(this.exitTiles);
+    this.blockCar();
     this.setupWeather();
     this.patrol = this.schedulePatrol();
     this.port = cfg.port
@@ -244,6 +245,23 @@ export class StopSim {
   // ---------------------------------------------------------------------------------------------
   // Setup
   // ---------------------------------------------------------------------------------------------
+
+  /** The parked car blocks movement over its footprint (not sight: it's below eye level). */
+  private blockCar(): void {
+    const car = this.cfg.layout.car;
+    const cx = car.x + 0.5;
+    const cy = car.y + 0.5;
+    const along = car.facing === 'east' || car.facing === 'west';
+    const hx = (along ? 4.4 : 1.8) / 2;
+    const hy = (along ? 1.8 : 4.4) / 2;
+    for (let ty = Math.floor(cy - hy); ty <= Math.floor(cy + hy); ty++) {
+      for (let tx = Math.floor(cx - hx); tx <= Math.floor(cx + hx); tx++) {
+        if (!this.grid.inBounds(tx, ty)) continue;
+        if (Math.abs(tx + 0.5 - cx) < hx && Math.abs(ty + 0.5 - cy) < hy)
+          this.grid.dynBlock[this.grid.idx(tx, ty)] = 1;
+      }
+    }
+  }
 
   private setupWeather(): void {
     const w = TUNING.weather;
@@ -332,9 +350,10 @@ export class StopSim {
     }
   }
 
-  /** Walkable tiles around a point, nearest first (party spawn around the car). */
+  /** Walkable tiles around a point, nearest first, preferring the camera (south) side. */
   spawnTiles(x: number, y: number, n: number): Point[] {
     const out: Point[] = [];
+    const south: Point[] = [];
     for (let r = 1; r <= 4 && out.length < n + 2; r++) {
       for (let dy = -r; dy <= r; dy++) {
         for (let dx = -r; dx <= r; dx++) {
@@ -343,12 +362,13 @@ export class StopSim {
           const ty = Math.floor(y) + dy;
           if (!this.grid.walkable(tx, ty)) continue;
           if (Math.abs(tx + 0.5 - x) < 1.2 && Math.abs(ty + 0.5 - y) < 0.9) continue;
-          out.push({ x: tx + 0.5, y: ty + 0.5 });
+          (ty + 0.5 >= y ? south : out).push({ x: tx + 0.5, y: ty + 0.5 });
         }
       }
     }
-    if (out.length === 0) out.push(this.grid.nearestWalkable(x, y) ?? { x, y });
-    return out;
+    const all = [...south, ...out];
+    if (all.length === 0) all.push(this.grid.nearestWalkable(x, y) ?? { x, y });
+    return all;
   }
 
   private setupContainers(): void {

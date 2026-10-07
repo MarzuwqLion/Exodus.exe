@@ -63,6 +63,15 @@ describe('stop simulation: movement and control', () => {
     expect(w.controller).toBe(0);
     expect(b.controller).toBe(1);
     expect(v.controller).toBeNull();
+    // Start everyone in the open lot.
+    for (const [m, x, y] of [
+      [w, 8.5, 8.5],
+      [b, 18.5, 8.5],
+      [v, 10.5, 9.5],
+    ] as const) {
+      m.x = m.px = x;
+      m.y = m.py = y;
+    }
     const w0 = { x: w.x, y: w.y };
     const b0 = { x: b.x, y: b.y };
     run(sim, 120, () => ({ 0: intent(0.8, 0), 1: intent(0, -0.8) }));

@@ -1,0 +1,57 @@
+/**
+ * Scene jumps (spec §17.6: `?scene=depot` etc.): build a playable configuration straight from URL parameters
+ * (seed, region, weather, players, heat, day, variant, skin, integrity, alert) without a run.
+ */
+import { DEPOT_A, DEPOT_B } from '../content/layouts/depot';
+import { TEST_LOT } from '../content/layouts/test';
+import type { LaunchConfig } from '../core/config';
+import type { MemberId, Region, Slot, Weather } from '../core/types';
+import type { Game } from '../game';
+import { startingParty, startingResources } from '../run/party';
+import type { LayoutDef } from '../sim/layout';
+import type { StopConfig } from '../sim/stop';
+
+export const REGION_WEATHER: Record<Region, Weather[]> = {
+  newengland: ['snow', 'sleet', 'clearcold'],
+  corridor: ['rain', 'drizzle', 'smog'],
+  piedmont: ['fog', 'drizzle', 'clear'],
+  lowcountry: ['heavyrain', 'storm', 'humid'],
+};
+
+export const LAYOUTS: Record<string, LayoutDef[]> = {
+  depot: [DEPOT_A, DEPOT_B],
+  lot: [TEST_LOT],
+};
+
+/** Join the requested number of players for QA and scene jumps (keyboard layouts). */
+export function ensurePlayers(game: Game, n: 1 | 2): void {
+  if (!game.input.isJoined(0)) game.input.join('kb1');
+  if (n === 2 && !game.input.isJoined(1)) game.input.join('kb2');
+}
+
+export function jumpStopConfig(game: Game, kind: string, c: LaunchConfig): StopConfig {
+  const layouts = LAYOUTS[kind] ?? LAYOUTS.depot;
+  const variant = Math.max(0, Math.min(layouts.length - 1, c.variant ?? 0));
+  const region: Region = c.region ?? 'newengland';
+  const weather: Weather = c.weather ?? REGION_WEATHER[region][0];
+  const party = startingParty();
+  for (const m of party) {
+    if (m.kind !== 'android') continue;
+    if (c.skin !== null) m.skin = c.skin;
+    if (c.integrity !== null) m.integrity = c.integrity;
+  }
+  ensurePlayers(game, c.players);
+  const control: Record<Slot, MemberId | null> = { 0: 'wren', 1: c.players === 2 ? 'brick' : null };
+  return {
+    layout: layouts[variant],
+    seed: c.seed ?? 1,
+    region,
+    weather,
+    heat: c.heat ?? 0,
+    day: c.day ?? 3,
+    party,
+    control,
+    resources: startingResources(),
+    startAlert: c.alert,
+  };
+}

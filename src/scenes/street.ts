@@ -170,7 +170,7 @@ export class StreetScene implements GameScene {
 
   tick(dt: number): void {
     this.time += dt;
-    const it = this.game.input.consume(0, this.intent);
+    const it = this.game.intents[0] ?? this.intent;
     if (this.freeze) return;
     const max = it.sprint ? TUNING.movement.sprintSpeed : TUNING.movement.briskSpeed;
     const tx = it.move.x * max;

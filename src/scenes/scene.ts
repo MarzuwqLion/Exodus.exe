@@ -1,6 +1,7 @@
 /** The contract every game scene implements (rendering side). */
 import type * as THREE from 'three';
 import type { SceneLike } from '../core/scenes';
+import type { Slot } from '../core/types';
 import type { CameraRig } from '../render/camera';
 import type { UiSurface } from '../ui/surface';
 
@@ -27,6 +28,12 @@ export interface GameScene extends SceneLike {
   pausable(): boolean;
   /** Called when the scene is replaced (free GPU resources). */
   dispose?(): void;
+  /** Player 2 joined (slot assigned) while this scene runs. */
+  onJoin?(slot: Slot): void;
+  /** A player dropped out. */
+  onDrop?(slot: Slot): void;
+  /** Lines for the pause menu's party page. */
+  partyLines?(): string[];
   /** Debug/QA hooks. */
   debugInfo?(): Record<string, string | number>;
 }
