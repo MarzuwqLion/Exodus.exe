@@ -106,7 +106,7 @@ export const TUNING = {
     searchPrivate: 18,
     hack: 10,
     /** Plugged in on a spoofed session (Papers or a hack): androids have no real ID (spec §8.2). */
-    spoofedCharging: 11,
+    spoofedCharging: 10.7,
     staffZone: 8,
     /** At the Port: in the yard, on the waterline path, or on the apron without coming through the gate. */
     portTrespass: 11,

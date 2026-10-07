@@ -89,10 +89,10 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 - [x] M7.1 Title, join, intro
 - [x] M7.2 Tutorial and first-time tips
-- [ ] M7.3 Transitions (pixel dissolve, scanline wipe)
-- [ ] M7.4 Full procedural audio, music layers, override loader
-- [ ] M7.5 Settings and pause menu
-- [ ] M7.6 Typewriter text and juice (hit-pause, knockback, sparks, shake, pickup pops)
+- [x] M7.3 Transitions (pixel dissolve, scanline wipe)
+- [x] M7.4 Full procedural audio, music layers, override loader
+- [x] M7.5 Settings and pause menu
+- [x] M7.6 Typewriter text and juice (hit-pause, knockback, sparks, shake, pickup pops)
 - [ ] M7.7 Art pass over every prop and lighting setup using the screenshot gallery
 - [ ] M7.8 Exit: fresh screenshot gallery shows no off-style or unreadable scenes
 
@@ -100,7 +100,7 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 - [x] M8.1 Debug overlay, hotkeys, scene jumps (§17.6)
 - [ ] M8.2 Performance benchmark; budgets pass
-- [ ] M8.3 README.md and qa/CHECKLIST.md
+- [x] M8.3 README.md and qa/CHECKLIST.md
 - [ ] M8.4 Final full-spec audit and qa/FINAL_REPORT.md
 
 ## Known issues
