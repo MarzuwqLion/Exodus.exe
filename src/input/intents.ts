@@ -99,9 +99,7 @@ export class MenuNav {
     const sx = Math.abs(it.move.x) > 0.55 ? Math.sign(it.move.x) : 0;
     const sy = Math.abs(it.move.y) > 0.55 ? Math.sign(it.move.y) : 0;
     // Encode the stick direction: prefer the dominant axis.
-    let dir = 0;
-    if (Math.abs(it.move.y) >= Math.abs(it.move.x)) dir = sy * 2;
-    else dir = sx;
+    const dir = Math.abs(it.move.y) >= Math.abs(it.move.x) ? sy * 2 : sx;
     if (dir === 0) {
       this.heldDir = 0;
       this.heldTime = 0;
