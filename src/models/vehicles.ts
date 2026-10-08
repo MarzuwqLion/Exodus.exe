@@ -290,14 +290,14 @@ const PARKED_PAINT: readonly (readonly [number, number])[] = [
 /** Distinct parked-car variants (style × paint); larger variants wrap. */
 export const PARKED_CAR_VARIANTS = 10;
 
-/** A parked car: sedan, hatchback, SUV, compact, or pickup, in a muted paint, lights off. */
-export function parkedCar(k: Kit, variant = 0): void {
+/** A car: sedan, hatchback, SUV, compact, or pickup, in a muted paint; lights off when parked. */
+export function parkedCar(k: Kit, variant = 0, lit = false): void {
   const n = Math.floor(Math.abs(variant));
   const style = vint(variant, PARKED_STYLES.length);
   const s = PARKED_STYLES[style];
   const [body, roof] = PARKED_PAINT[(n * 2 + 1) % PARKED_PAINT.length];
   carBody(k, s, { body, roof, glass: C.night1, trim: C.night3, tire: C.night0, hub: C.concrete1 });
-  carLamps(k, s, false, s.wid / 2 - 0.3, s.wid / 2 - 0.25);
+  carLamps(k, s, lit, s.wid / 2 - 0.3, s.wid / 2 - 0.25);
   if (s === PICKUP) {
     const hw = s.wid / 2 - 0.05;
     for (const sx of [-1, 1]) k.box(0.1, 0.42, 2.0, body, { x: sx * hw, y: s.belt, z: -1.6 });

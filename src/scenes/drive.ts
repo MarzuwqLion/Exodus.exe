@@ -13,6 +13,7 @@ import type { PlayerIntent, Region } from '../core/types';
 import type { Game } from '../game';
 import { Kit } from '../models/kit';
 import { BILLBOARD_FACE, buildProp, type PropId } from '../models/props';
+import { PARKED_CAR_VARIANTS, parkedCar } from '../models/vehicles';
 import { BILLBOARD_LINES, billboardCanvas } from '../models/signs';
 import { CameraRig } from '../render/camera';
 import { LightPool, type Emitter } from '../render/lights';
@@ -128,6 +129,18 @@ function buildRoad(
   return { billboards, towerX };
 }
 
+/** An oncoming car (heading west, −x), with its headlights on. */
+function trafficMesh(variant: number): THREE.Group {
+  const k = new Kit();
+  k.at({ ry: -Math.PI / 2 }, () => parkedCar(k, variant, true));
+  const out = k.build();
+  const m = materials();
+  const g = new THREE.Group();
+  if (out.solid) g.add(new THREE.Mesh(out.solid, m.toon));
+  if (out.glow) g.add(new THREE.Mesh(out.glow, m.glow));
+  return g;
+}
+
 function buildAt(k: Kit, id: PropId, x: number, z: number, ry: number, variant: number): void {
   k.at({ x, z, ry }, () => buildProp(k, id, variant));
 }
@@ -202,8 +215,7 @@ export class DriveScene implements GameScene {
     this.scene.add(this.car);
     // Oncoming traffic on the far lanes, and sometimes a drone.
     for (let i = 0; i < 3; i++) {
-      const t = wagonMesh();
-      t.rotation.y = Math.PI;
+      const t = trafficMesh(rng.int(0, PARKED_CAR_VARIANTS - 1));
       t.position.set(rng.range(40, this.length + 40), 0, -LANE_Z + rng.range(-0.6, 0.6));
       this.scene.add(t);
       this.traffic.push(t);
@@ -326,8 +338,13 @@ export class DriveScene implements GameScene {
 
   drawUi(ui: UiSurface): void {
     const node = currentNode(this.flow.run.map);
-    if (this.titleT > 0 && this.titleT < 3.2)
-      ui.text(`${REGION_NAMES[node.region]} · ${node.name}`, ui.width / 2, 40, C.fog1, { align: 'center' });
+    if (this.titleT > 0 && this.titleT < 3.2) {
+      // On a dark band: the north roadside (billboards, buildings) is in frame behind it.
+      const name = `${REGION_NAMES[node.region]} · ${node.name}`;
+      const w = ui.measure(name) + 16;
+      ui.panel(Math.floor(ui.width / 2 - w / 2), 34, w, 17, C.night0, C.night2);
+      ui.text(name, ui.width / 2, 40, C.fog1, { align: 'center', shadow: null });
+    }
     const dev = this.game.input.glyphDevice(0, this.game.save.settings.glyphStyle);
     if (!this.panel && !this.done) {
       const label = 'Hold to fast-forward';
