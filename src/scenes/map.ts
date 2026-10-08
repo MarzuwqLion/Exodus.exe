@@ -275,15 +275,20 @@ export class MapScene implements GameScene {
     const cur = currentNode(run.map);
     const opts = this.options;
     const sel = this.target ?? opts[this.sel];
-    // Town names under each town on screen.
+    // Town names under each town on screen. With large text there's only room to name where the party is
+    // and where it can go next; the rest stay lights until selected.
+    const compact = ui.width < 480;
     const p = { x: 0, y: 0 };
+    let selX = ui.width / 2;
     for (const n of run.map.nodes) {
       const w = nodePos(n);
       this.rig.worldToLow(w.x, 0, w.z + 1.6, p);
       const sx = (p.x / 640) * ui.width;
       const sy = (p.y / 360) * ui.height;
-      if (sx < -40 || sx > ui.width + 40 || sy < 20 || sy > ui.height - 10) continue;
+      if (n === sel) selX = sx;
+      if (sx < -40 || sx > ui.width + 40 || sy < 20 || sy > ui.height - 26) continue;
       const isOpt = opts.includes(n);
+      if (compact && !isOpt && n !== cur && n !== sel) continue;
       const color = n === sel ? C.amber2 : isOpt ? C.fog1 : n === cur ? C.fog2 : C.slate1;
       const label = n.type === 'station' && n.revealed ? `${n.name} ◆` : n.name;
       ui.text(label, sx, sy, color, { align: 'center' });
@@ -294,9 +299,10 @@ export class MapScene implements GameScene {
     ui.text(`Day ${run.day} · The Sankofa sails in ${s.daysLeft} days`, ui.width / 2, 8, color, {
       align: 'center',
     });
-    // The selected town.
+    // The selected town, in a panel on the side away from it (half the screen wide with large text).
     if (sel) {
-      const wx = ui.width - 172;
+      const pw = compact ? Math.floor(ui.width / 2) - 12 : 172;
+      const panelX = selX > ui.width / 2 ? 8 : ui.width - pw - 8;
       const lines: [string, number][] = [];
       const type = shownType(sel);
       lines.push([sel.name, C.amber2]);
@@ -309,10 +315,12 @@ export class MapScene implements GameScene {
         walk ? C.amber2 : C.fog0,
       ]);
       for (const r of run.rumors) if (r.nodeId === sel.id) lines.push([RUMOR_NAMES[r.kind], C.amber1]);
-      const h = 10 + lines.length * ui.lineHeight;
-      ui.panel(wx - 8, ui.height - h - 26, 172, h, C.night0, C.slate0);
-      lines.forEach(([t, c], i) =>
-        ui.text(t, wx, ui.height - h - 21 + i * ui.lineHeight, c, { shadow: null }),
+      const rows: [string, number][] = [];
+      for (const [t, c] of lines) for (const l of ui.wrap(t, pw - 16)) rows.push([l, c]);
+      const h = 10 + rows.length * ui.lineHeight;
+      ui.panel(panelX, ui.height - h - 26, pw, h, C.night0, C.slate0);
+      rows.forEach(([t, c], i) =>
+        ui.text(t, panelX + 8, ui.height - h - 21 + i * ui.lineHeight, c, { shadow: null }),
       );
       const dev = this.game.input.glyphDevice(0, this.game.save.settings.glyphStyle);
       const verb = walk ? 'Walk to' : 'Drive to';

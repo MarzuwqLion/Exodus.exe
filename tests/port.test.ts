@@ -4,6 +4,7 @@ import { portConfigFor } from '../src/bots/portbots';
 import { PORT_GEO } from '../src/content/layouts/port';
 import { TUNING } from '../src/content/tuning';
 import { findInteraction, startInteraction } from '../src/sim/actions';
+import { pressScan } from '../src/sim/breathing';
 import { updateBehaviors } from '../src/sim/behaviors';
 import { gangwayFoot, trespassing } from '../src/sim/port';
 import { StopSim, type StopConfig } from '../src/sim/stop';
@@ -102,6 +103,31 @@ describe('the Port (spec §11.5)', () => {
     sim.step({});
     expect(sim.port!.archScan).toBe(-1);
     expect(findInteraction(sim, brick)?.disabled).toBe('Locked down');
+  });
+
+  it('at every Heat level a clean breathing scan gets an android through the arch', () => {
+    const P = TUNING.port;
+    for (const heat of [0, 1, 2, 3]) {
+      const sim = port({}, heat);
+      // Only the arch's operator stays.
+      for (const n of sim.npcs) if (n.idx !== sim.port!.operator && n.role !== 'crew') n.mode = 'gone';
+      sim.drones.length = 0;
+      sim.resources.papers = 0;
+      const [wren] = sim.members;
+      place(wren, PORT_GEO.archSouth.x, PORT_GEO.archSouth.y);
+      const it = findInteraction(sim, wren)!;
+      expect(it.verb).toBe('Breathing scan');
+      startInteraction(sim, wren, it);
+      expect(wren.scan!.meter).toBe(P.archScanBase + P.archScanPerHeat * heat);
+      // Breathe a little after every beat: inside the window, never dead on it.
+      for (let i = 0; i < 10 * TUNING.sim.hz && wren.scan; i++) {
+        const s = wren.scan;
+        if (s.next < s.beats.length && s.t >= s.beats[s.next] + 0.09) pressScan(s);
+        sim.step({});
+      }
+      expect(sim.port!.gatePassed.has(wren.idx)).toBe(true);
+      expect(sim.alert.on).toBe(false);
+    }
   });
 
   it("Captain Mensah's friends at the gate wave the party through", () => {

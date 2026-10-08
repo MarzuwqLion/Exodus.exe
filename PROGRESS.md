@@ -107,8 +107,8 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 Ranked by severity in `qa/FINAL_REPORT.md`. In short:
 
-- The Port at Heat 3 is a near-certain loss for a careful party (0% of bot attempts; the band only asks for at most
-  40%).
+- The Port is hard at high Heat by design: a careful bot gets someone aboard 40% of the time at Heat 2 and 27–31% at
+  Heat 3 (band: at most 40%), losing mostly at the held berth.
 - The tightest stop band margins on the test seeds are gas greedy 1P and diner greedy 2P at 41% (floor 40%);
   `npx tsx tools/bands.ts --n 400` puts the true means 4 or more points inside every band.
 - The Port band at Heat 0 is 81% solo against a 70% floor, measured with a careful bot rather than people.

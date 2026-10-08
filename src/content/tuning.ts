@@ -463,10 +463,11 @@ export const TUNING = {
     archReach: 1.3,
     /**
      * The terminal's arch is a high-security scanner: its breathing scan starts this wary, and warier per Heat
-     * level (like checkpoint guards, §11.6).
+     * level (like checkpoint guards, §11.6). It fails at breathing.routineFailAt, so the start stays under it at
+     * Heat 3: a clean scan always passes; two missed breaths fail at Heat 0, one from Heat 1.
      */
-    archScanBase: 12,
-    archScanPerHeat: 10,
+    archScanBase: 14,
+    archScanPerHeat: 5,
     /** "They know you're coming": Recyclers posted across the gangway's foot, per Heat level. */
     berthGuardsPerHeat: 1,
     /** A posted Recycler only goes after someone this close to its post, and braces against knockback. */

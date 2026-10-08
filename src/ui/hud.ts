@@ -413,6 +413,8 @@ export class StopHud {
 
   private drawPrompts(ui: UiSurface): void {
     const sim = this.sim;
+    // Where player 1's prompt row ends, so player 2's never runs into it.
+    let p1End = -Infinity;
     for (const slot of [0, 1] as Slot[]) {
       const m = sim.controlled(slot);
       if (!m) continue;
@@ -423,7 +425,7 @@ export class StopHud {
         : slot === 0
           ? Math.floor(ui.width * 0.27)
           : Math.floor(ui.width * 0.73);
-      const y = ui.height - 16;
+      let y = ui.height - 16;
       if (m.mode === 'hack' && m.hack) {
         this.hackSeq(ui, m, dev, cx, y - 14);
         continue;
@@ -462,12 +464,15 @@ export class StopHud {
       if (m.mode === 'carry') prompts.push(['A', 'Put down']);
       let total = 0;
       for (const [g, v] of prompts) total += ui.measureButton(g, dev) + 4 + ui.measure(v) + 10;
-      let px = cx - total / 2;
+      let px = Math.max(4, Math.min(cx - total / 2, ui.width - total - 4));
       // In co-op, player 1's prompts start clear of the AI rows at the bottom-left.
       if (slot === 0 && !solo && sim.members.some((o) => o.controller === null && o.mode !== 'gone'))
         px = Math.max(px, AI_ROW_RIGHT + 6);
+      // Two long rows (large text, or many prompts) don't fit side by side: player 2's goes up a line.
+      if (slot === 1 && prompts.length > 0 && px < p1End + 8) y -= 13;
       for (const [g, v] of prompts)
         px += ui.prompt(g, dev, v, px, y, it?.disabled && g === 'A' ? C.slate1 : C.fog2) + 10;
+      if (slot === 0 && prompts.length > 0) p1End = px - 10;
       // Held interactions show progress.
       if (m.channel || sim.exit.holdT > 0) {
         const ch = m.channel;

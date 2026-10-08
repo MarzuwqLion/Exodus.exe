@@ -199,26 +199,50 @@ export class JoinScene implements GameScene {
       const p = this.rig.worldToLow(f.x, f.rig.top + 0.5, f.z, { x: 0, y: 0 });
       ui.text(`${s + 1}`, p.x, p.y - 10, s === 0 ? C.amber2 : C.fog2, { align: 'center' });
     }
-    // A panel per slot.
-    const w = 280;
+    // A panel per slot. With large text the screen is half as wide, so the panels are compact: who, the
+    // model, and the ability's name.
+    const w = Math.min(280, Math.floor((ui.width - 36) / 2));
+    const compact = w < 200;
+    const ph = compact ? 62 : 116;
+    const py = ui.height - ph - (compact ? 26 : 12);
     for (const s of [0, 1] as Slot[]) {
       const x = s === 0 ? 12 : ui.width - w - 12;
-      const y = ui.height - 128;
-      ui.panel(x, y, w, 116, C.night0, s === 0 ? C.amber0 : C.slate0);
+      ui.panel(x, py, w, ph, C.night0, s === 0 ? C.amber0 : C.slate0);
       if (!g.input.isJoined(s)) {
-        ui.text('Player 2', x + 10, y + 8, C.slate1, { shadow: null });
-        ui.text('Press Start on a second controller to join', x + 10, y + 24, C.fog1, { shadow: null });
-        ui.text('(Keyboard: Backspace for the arrow keys)', x + 10, y + 36, C.slate1, {
+        ui.text('Player 2', x + 10, py + 8, C.slate1, { shadow: null });
+        if (compact) {
+          ui.paragraph(
+            'Start to join (Backspace on the keyboard)',
+            x + 10,
+            py + 22,
+            w - 20,
+            C.fog1,
+            Infinity,
+            {
+              shadow: null,
+            },
+          );
+          continue;
+        }
+        ui.text('Press Start on a second controller to join', x + 10, py + 24, C.fog1, { shadow: null });
+        ui.text('(Keyboard: Backspace for the arrow keys)', x + 10, py + 36, C.slate1, {
           shadow: null,
         });
-        ui.text('The AI plays whoever nobody picks.', x + 10, y + 56, C.slate1, { shadow: null });
+        ui.text('The AI plays whoever nobody picks.', x + 10, py + 56, C.slate1, { shadow: null });
         continue;
       }
       const id = CHOICES[this.pick[s]];
       const d = MEMBERS[id];
-      ui.text(`Player ${s + 1}: ${d.name}`, x + 10, y + 8, s === 0 ? C.amber2 : C.fog2, { shadow: null });
-      ui.text(d.model, x + 10, y + 20, C.slate1, { shadow: null });
-      let yy = y + 34;
+      const col = s === 0 ? C.amber2 : C.fog2;
+      if (compact) {
+        ui.text(`Player ${s + 1}`, x + 10, py + 8, C.slate1, { shadow: null });
+        ui.text(d.name, x + 10, py + 20, col, { shadow: null });
+        ui.text(`Ability: ${d.ability.name}`, x + 10, py + 34, C.fog0, { shadow: null });
+        continue;
+      }
+      ui.text(`Player ${s + 1}: ${d.name}`, x + 10, py + 8, col, { shadow: null });
+      ui.text(d.model, x + 10, py + 20, C.slate1, { shadow: null });
+      let yy = py + 34;
       yy += ui.paragraph(d.strength, x + 10, yy, w - 20, C.fog1, Infinity, { shadow: null }) + 3;
       yy += ui.paragraph(`${d.ability.name}: ${d.ability.text}`, x + 10, yy, w - 20, C.fog0, Infinity, {
         shadow: null,
@@ -238,7 +262,7 @@ export class JoinScene implements GameScene {
     }
     const dev = g.input.glyphDevice(0, g.save.settings.glyphStyle);
     if (g.save.meta.tutorialDone)
-      ui.text(`Skip tutorial: ${this.skipTutorial ? 'Yes' : 'No'}`, cx, ui.height - 150, C.fog1, {
+      ui.text(`Skip tutorial: ${this.skipTutorial ? 'Yes' : 'No'}`, cx, py - 12, C.fog1, {
         align: 'center',
       });
     ui.prompt('A', dev, 'Set out', cx, ui.height - 14, C.fog2, 'center');

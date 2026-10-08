@@ -45,8 +45,6 @@ export interface LaunchConfig {
   day: number | null;
   alert: boolean;
   variant: number | null;
-  /** Seconds of simulation to fast-forward after a scene jump (QA). */
-  time: number | null;
   /** Pixel snapping (F7 toggles at runtime). */
   snap: boolean;
   /** Extra QA variant tag (e.g. 'compromised', 'bust', 'allLost', 'shipSailed', 'june'). */
@@ -88,7 +86,6 @@ export function parseConfig(search: string): LaunchConfig {
     day: num(params.get('day')),
     alert: flag(params, 'alert'),
     variant: num(params.get('variant')),
-    time: num(params.get('time')),
     snap: params.get('snap') !== '0',
     tag: params.get('tag'),
     nohud: flag(params, 'nohud'),
