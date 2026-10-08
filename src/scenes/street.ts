@@ -11,6 +11,7 @@ import type { PlayerIntent } from '../core/types';
 import type { Game } from '../game';
 import { emptyIntent } from '../input/intents';
 import { Kit } from '../models/kit';
+import { stationWagon } from '../models/vehicles';
 import { buildRig, defaultLook, type Look } from '../models/rig';
 import { CameraRig } from '../render/camera';
 import { CharacterRenderer, type CharInstance } from '../render/characters';
@@ -21,7 +22,8 @@ import { Particles } from '../render/particles';
 import type { UiSurface } from '../ui/surface';
 import type { GameScene, WorldView } from './scene';
 
-export function buildBlock(k: Kit): void {
+/** The block, with the party's wagon parked at `wagon` (facing east). */
+export function buildBlock(k: Kit, wagon: { x: number; z: number } = { x: 2, z: 6.4 }): void {
   // Ground: road, curb, sidewalk, plowed snow edges.
   k.ground(-40, -30, 40, 30, 0, C.night2);
   k.ground(-40, -2, 40, 9, 0.002, C.night3);
@@ -64,7 +66,7 @@ export function buildBlock(k: Kit): void {
       k.light({ x: 0, y: 4.6, z: 1.3, color: C.amber2, intensity: 7, range: 10 });
     });
   }
-  // Dumpster, pallets, a power pole, a parked wagon shape.
+  // Dumpster, pallets, a power pole, and the wagon.
   k.at({ x: -6, z: -4.5 }, () => {
     k.box(2, 1.3, 1.1, C.moss0, undefined, { top: C.moss1 });
     k.box(2.1, 0.12, 1.15, C.night3, { y: 1.3 });
@@ -77,21 +79,7 @@ export function buildBlock(k: Kit): void {
     k.cylinder(0.12, 8, 6, C.rust0);
     k.box(2.4, 0.15, 0.15, C.rust0, { y: 7.4 });
   });
-  k.at({ x: 2, z: 6.4, ry: 0 }, () => {
-    k.box(4.4, 0.75, 1.8, C.slate0, { y: 0.3 });
-    k.box(3.1, 0.6, 1.7, C.slate1, { x: -0.4, y: 1.05 }, { top: C.slate0 });
-    k.box(0.4, 0.45, 1.85, C.rust1, { x: 0.3, y: 0.45 });
-    k.box(2.4, 0.15, 1.5, C.night3, { x: -0.5, y: 1.7 });
-    k.box(1.6, 0.25, 1.2, C.moss0, { x: -0.6, y: 1.85 });
-    k.cylinder(0.32, 0.25, 8, C.night0, { x: -1.4, y: 0.32, z: 0.9, rx: Math.PI / 2 });
-    k.cylinder(0.32, 0.25, 8, C.night0, { x: 1.4, y: 0.32, z: 0.9, rx: Math.PI / 2 });
-    k.glow(() => {
-      k.box(0.08, 0.16, 0.3, C.fog2, { x: 2.21, y: 0.65, z: 0.55 });
-      k.box(0.08, 0.16, 0.3, C.fog2, { x: 2.21, y: 0.65, z: -0.55 });
-      k.box(0.08, 0.14, 0.24, C.amber0, { x: -2.21, y: 0.7, z: 0.6 });
-      k.box(0.08, 0.14, 0.24, C.amber0, { x: -2.21, y: 0.7, z: -0.6 });
-    });
-  });
+  k.at({ x: wagon.x, z: wagon.z, ry: Math.PI / 2, s: 0.9 }, () => stationWagon(k));
 }
 
 export class StreetScene implements GameScene {

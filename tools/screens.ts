@@ -92,6 +92,13 @@ function shots(): Shot[] {
   out.push(
     { name: 'hud-coop', caption: 'HUD, two players', query: 'scene=depot&players=2&seed=5', ticks: 120 },
     { name: 'hud-alert', caption: 'HUD, ALERT', query: 'scene=depot&alert=1&seed=5', ticks: 120 },
+    {
+      name: 'drone',
+      caption: 'A patrol drone over the lot (its searchlight in scanner cyan)',
+      query: 'scene=depot&seed=5&region=corridor&weather=rain',
+      ticks: 300,
+      eval: '(() => { const s = window.__exodus.game.scenes.current; s.sim.patrol.drone1 = s.sim.time + 0.5; })()',
+    },
     { name: 'hud-low-skin', caption: 'HUD, low Skin', query: 'scene=diner&skin=15&seed=5', ticks: 120 },
     {
       name: 'hud-low-integrity',

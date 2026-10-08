@@ -8,6 +8,7 @@ import { newPose, samplePose, type AnimName, type Pose } from '../anim/poses';
 import { TUNING } from '../content/tuning';
 import { dir8, dir8Angle } from '../core/math';
 import { Kit } from '../models/kit';
+import { stationWagon, type WagonOpts } from '../models/vehicles';
 import { PARTY_LOOKS, npcLook } from '../models/looks';
 import { buildRig, type Look, type RigDef } from '../models/rig';
 import type { StopSim } from '../sim/stop';
@@ -15,6 +16,7 @@ import type { Activity, MemberActor, NpcActor } from '../sim/types';
 import { CharacterRenderer, type CharInstance } from './characters';
 import { MASK, materials, withMask } from './materials';
 import { C } from './palettes';
+import { stipple } from './stipple';
 
 interface Animated {
   inst: CharInstance;
@@ -30,22 +32,27 @@ function animFor(a: Activity): AnimName {
 const RAYS = 14;
 
 /** A fan on the ground: observer cones and drone searchlights. */
+/**
+ * A view cone or searchlight on the ground, stippled (`density` of its pixels at full strength, see stipple.ts)
+ * so a drone's beam stays scanner cyan and a suspicious observer's cone alarm red after quantization.
+ */
 export class ConeFan {
   readonly mesh: THREE.Mesh;
   private pos: Float32Array;
   private mat: THREE.MeshBasicMaterial;
+  private density: { value: number };
 
-  constructor(color: number, opacity: number) {
+  constructor(color: number, density: number) {
     const geo = new THREE.BufferGeometry();
     this.pos = new Float32Array((RAYS + 1) * 3 * 3);
     geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
     this.mat = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity,
       depthWrite: false,
       fog: false,
     });
+    this.density = stipple(this.mat, density);
     // Keep whatever post-processing tag lies underneath (characters stay outlined; no bloom).
     this.mat.blending = THREE.CustomBlending;
     this.mat.blendSrc = THREE.SrcAlphaFactor;
@@ -57,9 +64,9 @@ export class ConeFan {
     this.mesh.renderOrder = 1;
   }
 
-  setColor(color: number, opacity: number): void {
+  setColor(color: number, density: number): void {
     this.mat.color.setHex(color);
-    this.mat.opacity = opacity;
+    this.density.value = density;
   }
 
   /** Rebuild the fan from (x, y) facing `facing`, clipped by sight (needs the stop's grid to clip). */
@@ -120,26 +127,12 @@ function buildMesh(build: (k: Kit) => void): THREE.Group {
   return g;
 }
 
-/** Placeholder-free station wagon (until the full vehicle models land, this is the party car). */
-export function wagonMesh(): THREE.Group {
-  return buildMesh((k) => {
-    k.box(4.4, 0.75, 1.8, C.slate0, { y: 0.3 }, { top: C.slate1 });
-    k.box(3.2, 0.62, 1.7, C.slate1, { x: -0.35, y: 1.05 }, { top: C.slate0 });
-    k.box(0.5, 0.5, 1.84, C.rust1, { x: 0.35, y: 0.42 });
-    k.box(2.6, 0.12, 1.5, C.night3, { x: -0.45, y: 1.7 });
-    k.box(1.8, 0.28, 1.25, C.moss0, { x: -0.6, y: 1.82 }, { top: C.moss1 });
-    k.box(3.0, 0.42, 0.04, C.night1, { x: -0.35, y: 1.15, z: 0.86 });
-    for (const sx of [-1.4, 1.4]) {
-      k.cylinder(0.33, 0.24, 8, C.night0, { x: sx, y: 0.33, z: 0.84, rx: Math.PI / 2 });
-      k.cylinder(0.33, 0.24, 8, C.night0, { x: sx, y: 0.33, z: -0.84 - 0.24, rx: Math.PI / 2 });
-    }
-    k.glow(() => {
-      k.box(0.06, 0.16, 0.3, C.fog2, { x: 2.21, y: 0.62, z: 0.55 });
-      k.box(0.06, 0.16, 0.3, C.fog2, { x: 2.21, y: 0.62, z: -0.55 });
-      k.box(0.06, 0.14, 0.24, C.amber0, { x: -2.21, y: 0.68, z: 0.6 });
-      k.box(0.06, 0.14, 0.24, C.amber0, { x: -2.21, y: 0.68, z: -0.6 });
-    });
-  });
+/**
+ * The party's station wagon (§5.4, `stationWagon`), turned to face +x like the other vehicles here and scaled to
+ * the 4.4 m footprint the parked car blocks in a stop.
+ */
+export function wagonMesh(opts: WagonOpts = {}): THREE.Group {
+  return buildMesh((k) => k.at({ ry: Math.PI / 2, s: 0.9 }, () => stationWagon(k, opts)));
 }
 
 export function vanMesh(): { body: THREE.Group; bar: THREE.Group; barOn: THREE.Group } {
@@ -240,7 +233,7 @@ export class StopView {
     }
     while (this.drones.length < sim.drones.length) {
       const mesh = droneMesh();
-      const fan = new ConeFan(C.cyan1, 0.22);
+      const fan = new ConeFan(C.cyan1, 0.375);
       this.group.add(mesh, fan.mesh);
       this.drones.push({ mesh, fan });
     }
@@ -310,7 +303,7 @@ export class StopView {
       const y = d.py + (d.y - d.py) * alpha;
       v.mesh.position.set(x, d.z + Math.sin(this.time * 2 + i) * 0.08, y);
       v.mesh.rotation.y = -d.heading;
-      v.fan.setColor(C.cyan1, sim.alert.on ? 0.3 : 0.2);
+      v.fan.setColor(C.cyan1, sim.alert.on ? 0.5 : 0.375);
       v.fan.update(
         sim,
         x,
@@ -437,14 +430,14 @@ export class StopView {
         const cone = this.cone(used++);
         const s = n.obs.state;
         const red = s === 'suspicious' || s === 'alarmed';
-        cone.setColor(red ? C.red1 : C.fog1, n.blindT > 0 ? 0.04 : red ? 0.16 : 0.1);
+        cone.setColor(red ? C.red0 : C.fog0, n.blindT > 0 ? 0.0625 : red ? 0.25 : 0.125);
         const f = n.lookT > 0 && n.lookAt ? Math.atan2(n.lookAt.y - n.y, n.lookAt.x - n.x) : n.facing;
         cone.update(sim, n.x, n.y, f, n.obs.coneDeg, n.obs.range * sim.currentRangeMult(), true);
       }
       for (const c of sim.cameras) {
         if (!near(c.x, c.y)) continue;
         const cone = this.cone(used++);
-        cone.setColor(C.fog1, 0.1);
+        cone.setColor(C.fog0, 0.125);
         cone.update(sim, c.x, c.y, c.facing, c.obs.coneDeg, c.obs.range * sim.currentRangeMult(), true);
       }
     }
@@ -453,7 +446,7 @@ export class StopView {
 
   private cone(i: number): ConeFan {
     while (this.cones.length <= i) {
-      const c = new ConeFan(C.fog1, 0.1);
+      const c = new ConeFan(C.fog0, 0.125);
       this.cones.push(c);
       this.group.add(c.mesh);
     }

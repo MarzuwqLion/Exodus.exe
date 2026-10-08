@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { TUNING } from '../content/tuning';
 import { EPILOGUE, MAIN, buildLut, type PaletteData } from './palettes';
+import { BAYER4_GLSL, setStippleOrigin } from './stipple';
 
 const LUT_SIZE = 64;
 
@@ -17,13 +18,7 @@ void main() {
   gl_Position = vec4(position.xy, 0.0, 1.0);
 }`;
 
-const BAYER = /* glsl */ `
-float bayer4(vec2 p) {
-  int x = int(mod(p.x, 4.0));
-  int y = int(mod(p.y, 4.0));
-  const float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
-  return (m[x + y * 4] + 0.5) / 16.0;
-}`;
+const BAYER = BAYER4_GLSL;
 
 const PREFILTER_FRAG = /* glsl */ `
 uniform sampler2D tScene;
@@ -381,6 +376,7 @@ export class Pipeline {
     // sky never feeds the bloom. Scenes must not set `scene.background` (that clears with alpha 1).
     const fog = input.scene.fog;
     r.setClearColor(fog ? fog.color : 0x000000, 0);
+    setStippleOrigin(input.texelOrigin.x, input.texelOrigin.y);
     r.setRenderTarget(this.sceneTarget);
     r.render(input.scene, input.camera);
 

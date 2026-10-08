@@ -208,7 +208,7 @@ export class JoinScene implements GameScene {
       if (!g.input.isJoined(s)) {
         ui.text('Player 2', x + 10, y + 8, C.slate1, { shadow: null });
         ui.text('Press Start on a second controller to join', x + 10, y + 24, C.fog1, { shadow: null });
-        ui.text('(Backspace for the arrow-key layout on the keyboard)', x + 10, y + 36, C.slate1, {
+        ui.text('(Keyboard: Backspace for the arrow keys)', x + 10, y + 36, C.slate1, {
           shadow: null,
         });
         ui.text('The AI plays whoever nobody picks.', x + 10, y + 56, C.slate1, { shadow: null });

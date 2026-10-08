@@ -92,7 +92,7 @@ export class CampScene implements GameScene {
     if (out.glow) this.scene.add(new THREE.Mesh(out.glow, m.glow));
     this.lights = new LightPool(this.scene);
     this.lights.addAll(out.lights);
-    const car = wagonMesh();
+    const car = wagonMesh({ hatchOpen: true });
     car.position.set(0, 0, 0);
     this.scene.add(car);
     // The party, sitting by the hatch.

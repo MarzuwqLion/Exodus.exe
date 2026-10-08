@@ -129,5 +129,14 @@ One line per call: what was decided and why. Newest at the bottom of each sectio
 - At the arch, a player with Papers can still take the breathing scan instead (A shows Papers, X takes the scan), saving the Papers for someone who breathes worse. The Port bot does this when the Papers won't cover everyone behind it, like a sensible player.
 - Recyclers holding the berth watch toward where the party was last seen, their gaze sweeping. Facing the apron, they never saw a party coming off the waterline path behind them.
 - Port and economy tuning (bands §17.2, §17.3): trespassing at the Port +11/s; the terminal turns out 3 + 1 per Heat level Recyclers at an ALERT; the arch's breathing scan starts 12 points wary (so two missed breaths fail it), +10 per Heat level; androids lose 12 Battery a leg (was 10). The Port band's party arrives with a leg's Battery spent and its Integrity intact, as careful parties do.
-- Results. The Port band (100 attempts each) is in PROGRESS.md and qa/FINAL_REPORT.md. Economy, 2,000 runs each: competent 58.9% reach Ghana, skilled and greedy 69.3%, random 3.1%; competent median slack 2 days; every seed survives leg 1.
+- Results. The Port band (100 attempts each) is in qa/FINAL_REPORT.md. Economy, 2,000 runs each, after the stop band retune below: competent 59.1% reach Ghana, skilled and greedy 71.8%, random 4.2%; competent median slack 2 days; every seed survives leg 1.
 - Stop band retune after the heavier Battery drain: a spoofed charging session reads +10.7/s while watched (was +11). Depot cautious two-player exposure had crept to 31% (band 10–30%); now 17% solo and 24% two-player, with every other stop band still inside.
+
+## M7–M8 — Presentation and QA
+
+- View cones and drone searchlights are stippled: full-strength pixels in a 4×4 Bayer pattern anchored to the world's texel grid, instead of a faint blended tint. A blended cyan quantized to slate (the palette only gives the reserved colors to inputs with most of their chroma), so drone searchlights read as gray shapes. Drones stipple the bright scanner cyan, which survives the vignette at the screen's edges.
+- The party car is the modeled station wagon everywhere (stops, drive, camp, checkpoints, the title), at 90% scale to match the 4.4 m footprint it blocks in a stop. Camp shows it with the hatch open (§12.5).
+- The drive camera frames north of the car (zoom 1.25), and the billboards, scanner tower, and drone stand just past the north shoulder. Framed on the car, they were out of view and the drive showed an empty road.
+- The title's wagon idles at the north curb under a sodium lamp (§13.4).
+- In co-op, player 1's prompts start right of the AI rows at the bottom-left, which they used to overlap.
+- A stop's name is drawn under the HUD, so a speech bubble in the first seconds covers it instead of mixing with it.

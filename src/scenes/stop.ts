@@ -528,11 +528,13 @@ export class StopScene implements GameScene {
 
   drawUi(ui: UiSurface): void {
     if (this.game.config.nohud) return;
-    this.hud.draw(ui);
+    // The stop's name first, under the HUD: a speech bubble in its first seconds covers it instead of mixing
+    // with it.
     if (this.titleT > 0 && this.params.title) {
       const a = this.titleT > 3 ? (3.5 - this.titleT) * 2 : Math.min(1, this.titleT);
       if (a > 0.3) ui.text(this.params.title, Math.floor(ui.width / 2), 44, C.fog1, { align: 'center' });
     }
+    this.hud.draw(ui);
     if (this.game.debug) this.drawAwareness(ui);
     this.params.onDrawUi?.(this, ui);
     this.modal?.draw(ui);

@@ -33,6 +33,15 @@ import type { GameScene, WorldView } from './scene';
 
 const SPEED = 14;
 const LANE_Z = 3.6;
+/**
+ * The camera looks down on the road from the south, so it frames north of the car: the far lanes, the north
+ * shoulder, and the billboards and scanner tower beyond it (which face the camera), with the car low in frame.
+ */
+const VIEW_Z = -4;
+const VIEW_ZOOM = 1.25;
+/** Billboards and the scanner tower stand just past the north shoulder, where the camera sees them. */
+const BILLBOARD_Z = -11.5;
+const TOWER_Z = -11;
 
 /** Roadside dressing per region: props and how often they appear. */
 const DRESSING: Record<Region, { id: PropId; every: number; far?: boolean }[]> = {
@@ -87,7 +96,7 @@ function buildRoad(
     for (let x = x0 + rng.range(0, d.every); x < x1; x += d.every * rng.range(0.7, 1.3)) {
       const north = rng.chance(d.far ? 0.75 : 0.5);
       const z = north
-        ? -(d.far ? rng.range(16, 26) : rng.range(10, 14))
+        ? -(d.far ? rng.range(13, 20) : rng.range(10, 13))
         : d.far
           ? rng.range(15, 22)
           : rng.range(10, 13);
@@ -106,13 +115,13 @@ function buildRoad(
     );
   // Billboards on the far side, facing the road.
   const billboards: { x: number; text: string }[] = [];
-  for (let x = 70; x < length; x += rng.range(110, 170)) {
-    buildAt(k, 'billboard', x, -15, 0, rng.int(0, 2));
+  for (let x = rng.range(16, 30); x < length; x += rng.range(110, 170)) {
+    buildAt(k, 'billboard', x, BILLBOARD_Z, 0, rng.int(0, 2));
     billboards.push({ x, text: rng.pick(BILLBOARD_LINES) });
   }
   // A scanner tower beside the highway.
   const towerX = rng.range(length * 0.25, length * 0.75);
-  k.at({ x: towerX, z: -13 }, () => {
+  k.at({ x: towerX, z: TOWER_Z }, () => {
     buildProp(k, 'scannerTowerBase');
     k.at({ y: 12 }, () => buildProp(k, 'scannerTowerHead'));
   });
@@ -172,7 +181,7 @@ export class DriveScene implements GameScene {
         new THREE.PlaneGeometry(BILLBOARD_FACE.w, BILLBOARD_FACE.h),
         signMaterial(pixelTexture(canvas), false),
       );
-      face.position.set(b.x + BILLBOARD_FACE.x, BILLBOARD_FACE.y, -15 + BILLBOARD_FACE.z + 0.02);
+      face.position.set(b.x + BILLBOARD_FACE.x, BILLBOARD_FACE.y, BILLBOARD_Z + BILLBOARD_FACE.z + 0.02);
       this.scene.add(face);
     }
     // The tower's sweeping beam: a long thin cyan glow pivoting at the head.
@@ -180,7 +189,7 @@ export class DriveScene implements GameScene {
     beamGeo.translate(13, 0, 0);
     this.beam = new THREE.Mesh(beamGeo, m.glowInstanced);
     (this.beam.material as THREE.MeshBasicMaterial).color = new THREE.Color(C.cyan1);
-    this.beam.position.set(this.towerX, 12.4, -13);
+    this.beam.position.set(this.towerX, 12.4, TOWER_Z);
     this.scene.add(this.beam);
     // Where the beam lands, the road lights up cyan.
     this.beamSpot = this.lights.add({ x: this.towerX, y: 1, z: 0, color: C.cyan1, intensity: 2.4, range: 6 });
@@ -201,13 +210,13 @@ export class DriveScene implements GameScene {
     }
     if (rng.chance(0.4)) {
       this.drone = droneMesh();
-      this.drone.position.set(rng.range(30, this.length), 7, -20);
+      this.drone.position.set(rng.range(30, this.length), 7, -9);
       this.scene.add(this.drone);
     }
     this.particles.setWeather(node.weather);
     this.scene.add(this.particles.group);
     this.rig.snap = game.config.snap;
-    this.rig.teleport(8, LANE_Z - 1, 1);
+    this.rig.teleport(8, VIEW_Z, VIEW_ZOOM);
   }
 
   enter(): void {
@@ -292,13 +301,13 @@ export class DriveScene implements GameScene {
     // The beam reaches the ground about 27 m out along its sweep.
     const reach = 12.4 / Math.tan(0.42);
     this.beamSpot.x = this.towerX + Math.cos(-yaw) * reach;
-    this.beamSpot.z = -13 + Math.sin(-yaw) * reach;
+    this.beamSpot.z = TOWER_Z + Math.sin(-yaw) * reach;
     for (const t of this.traffic) {
       if (!this.panel) t.position.x -= 18 * (dt > 0 ? dt : 1 / 60);
       if (t.position.x < x - 50) t.position.x += 140;
     }
     if (this.drone) this.drone.position.x += (this.panel ? 0 : 6) * (dt > 0 ? dt : 1 / 60);
-    this.rig.follow(x + 8, LANE_Z - 1, dt > 0 ? dt : 1 / 60, 1);
+    this.rig.follow(x + 8, VIEW_Z, dt > 0 ? dt : 1 / 60, VIEW_ZOOM);
     this.lights.update(this.rig.focus.x, this.rig.focus.z, this.time);
     this.particles.update(dt, this.rig.camera, this.rig.focus.x, this.rig.focus.z, this.rig.zoom);
   }

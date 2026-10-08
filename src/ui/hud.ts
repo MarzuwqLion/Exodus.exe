@@ -38,6 +38,8 @@ export interface Bubble {
 
 const _p = { x: 0, y: 0 };
 const HACK_GLYPHS: Glyph[] = ['A', 'B', 'X', 'Y'];
+/** The right edge of an AI row at the bottom-left (portrait, name, two bars, the eye). */
+const AI_ROW_RIGHT = 101;
 
 export class StopHud {
   floats: FloatText[] = [];
@@ -461,6 +463,9 @@ export class StopHud {
       let total = 0;
       for (const [g, v] of prompts) total += ui.measureButton(g, dev) + 4 + ui.measure(v) + 10;
       let px = cx - total / 2;
+      // In co-op, player 1's prompts start clear of the AI rows at the bottom-left.
+      if (slot === 0 && !solo && sim.members.some((o) => o.controller === null && o.mode !== 'gone'))
+        px = Math.max(px, AI_ROW_RIGHT + 6);
       for (const [g, v] of prompts)
         px += ui.prompt(g, dev, v, px, y, it?.disabled && g === 'A' ? C.slate1 : C.fog2) + 10;
       // Held interactions show progress.

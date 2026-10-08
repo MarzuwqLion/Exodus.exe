@@ -23,8 +23,8 @@ import { buildBlock } from './street';
 
 type Page = 'press' | 'menu' | 'settings' | 'credits' | 'confirm';
 
-/** Where the wagon idles (the street block's parked wagon) and the camera's framing of it. */
-const WAGON = { x: 2, z: 6.4 };
+/** Where the wagon idles, at the north curb under a sodium lamp, and the camera's framing of it. */
+const WAGON = { x: 4.5, z: 0.4 };
 const STUDIO = 'Lantern Rail Games';
 const LOGO = 'EXODUS.EXE';
 
@@ -35,7 +35,7 @@ export class TitleScene implements GameScene {
   private lights: LightPool;
   private particles = new Particles();
   private drone = droneMesh();
-  private beam = new ConeFan(C.cyan1, 0.2);
+  private beam = new ConeFan(C.cyan1, 0.375);
   private exhaust: THREE.Mesh[] = [];
   private page: Page = 'press';
   private menu = new VerticalMenu([]);
@@ -47,7 +47,7 @@ export class TitleScene implements GameScene {
   constructor(private readonly game: Game) {
     this.scene.fog = new THREE.FogExp2(C.slate0, 0.035);
     const k = new Kit();
-    buildBlock(k);
+    buildBlock(k, WAGON);
     const out = k.build();
     const m = materials();
     if (out.solid) this.scene.add(new THREE.Mesh(out.solid, m.toon));
