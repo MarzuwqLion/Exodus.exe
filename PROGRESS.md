@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M7.3–M7.8 Presentation: transitions, audio, settings, juice, the art pass and the screenshot gallery
+**Current task:** M7.7–M8.4: the gallery review, the benchmark, and the final report
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -105,8 +105,10 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 
 ## Known issues
 
-- Bot bands are verified for the depot, diner, and gas station (`npm run test:bots`). The tightest margins on the
-  test seeds are diner greedy 2P and gas greedy 1P at 41% (floor 40%); `npx tsx tools/bands.ts --n 400` puts the
-  true means 4 or more points inside every band.
-- Stop visuals are first-pass (simple furniture, dark lot); the modeled props land in the M7 art pass.
-- Character portraits in the HUD are 2D placeholders until the 3D head render (M7).
+Ranked by severity in `qa/FINAL_REPORT.md`. In short:
+
+- The Port at Heat 3 is a near-certain loss for a careful party (0% of bot attempts; the band only asks for at most
+  40%).
+- The tightest stop band margins on the test seeds are gas greedy 1P and diner greedy 2P at 41% (floor 40%);
+  `npx tsx tools/bands.ts --n 400` puts the true means 4 or more points inside every band.
+- The Port band at Heat 0 is 81% solo against a 70% floor, measured with a careful bot rather than people.

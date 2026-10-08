@@ -163,7 +163,7 @@ describe('the map (spec §12.2)', () => {
 });
 
 describe('the sailing clock and legs (spec §12.3, §12.4)', () => {
-  it('a leg costs a day, 8–14 car battery, and 5 Battery per android', () => {
+  it('a leg costs a day, its distance in car battery, and the tuned Battery per android', () => {
     const run = newRun(5);
     const to = nextNodes(run.map)[0];
     const car = run.resources.carBattery;

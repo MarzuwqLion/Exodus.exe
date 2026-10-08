@@ -199,6 +199,22 @@ describe('patrol clock (spec §8.7)', () => {
     expect(times.size).toBeGreaterThan(1);
   });
 
+  it('runs 15% faster per Heat level, and faster from Day 7 and again from Day 11 (spec §11.6, §11.7)', () => {
+    const P = TUNING.patrol;
+    const factor = (heat: number, day: number): number => new StopSim(cfg({ heat, day })).patrolFactor();
+    expect(factor(0, 3)).toBe(1);
+    expect(factor(1, 3)).toBeCloseTo(1 + P.heatSpeedPerLevel);
+    expect(factor(3, 3)).toBeCloseTo(1 + 3 * P.heatSpeedPerLevel);
+    expect(factor(0, 6)).toBe(1);
+    expect(factor(0, 7)).toBeCloseTo(P.day7Mult);
+    expect(factor(0, 11)).toBeCloseTo(P.day11Mult);
+    expect(factor(1, 11)).toBeCloseTo((1 + P.heatSpeedPerLevel) * P.day11Mult);
+    // A faster clock brings the first drone sooner.
+    const late = new StopSim(cfg({ noPatrol: false, heat: 1, day: 11 }));
+    expect(late.patrol.drone1).toBeLessThan(P.drone1 / late.patrolFactor() + P.jitter + 0.001);
+    expect(late.patrol.drone1).toBeLessThan(P.drone1 - P.jitter);
+  });
+
   it('a second drone can fly its own beat', () => {
     const sim = new StopSim(cfg({ noPatrol: false, patrolTimes: { drone1: 0.5, sweep: 9999, drone2: 1 } }));
     run(sim, 120, () => ({ 0: intent() }));
