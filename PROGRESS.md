@@ -4,7 +4,7 @@ Source of truth: `EXODUS_MVP_SPEC.md`. Decisions: `DECISIONS.md`.
 Resume protocol (spec §0.1 rule 5): read the spec, then this file, then `DECISIONS.md`, run the full test
 suite, and continue from the first unchecked task.
 
-**Current task:** M7.7–M8.4: the gallery review, the benchmark, and the final report
+**Current task:** none. Every milestone is done; the results are in `qa/FINAL_REPORT.md`.
 
 Background workstreams (subagents): written content (§12.10), procedural audio (§14), prop modeling (§5.3–5.4).
 
@@ -93,15 +93,15 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 - [x] M7.4 Full procedural audio, music layers, override loader
 - [x] M7.5 Settings and pause menu
 - [x] M7.6 Typewriter text and juice (hit-pause, knockback, sparks, shake, pickup pops)
-- [ ] M7.7 Art pass over every prop and lighting setup using the screenshot gallery
-- [ ] M7.8 Exit: fresh screenshot gallery shows no off-style or unreadable scenes
+- [x] M7.7 Art pass over every prop and lighting setup using the screenshot gallery
+- [x] M7.8 Exit: fresh screenshot gallery shows no off-style or unreadable scenes
 
 ## M8 — QA, performance, and documentation
 
 - [x] M8.1 Debug overlay, hotkeys, scene jumps (§17.6)
 - [x] M8.2 Performance benchmark; budgets pass
 - [x] M8.3 README.md and qa/CHECKLIST.md
-- [ ] M8.4 Final full-spec audit and qa/FINAL_REPORT.md
+- [x] M8.4 Final full-spec audit and qa/FINAL_REPORT.md
 
 ## Known issues
 

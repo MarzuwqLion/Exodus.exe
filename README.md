@@ -65,7 +65,7 @@ npm test               # unit tests (Vitest)
 npm run test:bots      # bot playtests: every stop, checkpoints, the Port, a full run to Ghana (several minutes)
 npm run sim:economy    # whole-run economy simulator; writes qa/economy.md
 npm run qa:screens     # screenshot gallery of every scene, region, and weather; writes qa/screenshots/index.html
-npm run bench          # 60 s performance benchmark; writes qa/bench.md
+npm run bench          # 60 s performance benchmark (frame rate uncapped); writes qa/bench.md
 ```
 
 The bot playtests and the economy simulator fail the build when a balance band (spec §17.2, §17.3) is missed. `tools/bands.ts` and `tools/portbands.ts` run the same bands in parallel worker processes for tuning (`--set path=value` tries a tuning change without editing the file).

@@ -3,5 +3,5 @@ dist
 coverage
 *.log
 .vite
-qa/screenshots/*.png
+qa/screenshots/
 qa/tmp
