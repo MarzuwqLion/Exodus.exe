@@ -19,7 +19,11 @@ const CHROME_ARGS = [
   '--enable-unsafe-swiftshader',
 ];
 
-export async function startSession(mode: 'preview' | 'dev' = 'preview', headless = true): Promise<Session> {
+export async function startSession(
+  mode: 'preview' | 'dev' = 'preview',
+  headless = true,
+  extraArgs: string[] = [],
+): Promise<Session> {
   let server: PreviewServer | ViteDevServer;
   let url: string;
   if (mode === 'preview') {
@@ -35,7 +39,11 @@ export async function startSession(mode: 'preview' | 'dev' = 'preview', headless
     server = s;
     url = s.resolvedUrls?.local[0] ?? 'http://localhost:5199/';
   }
-  const browser = await chromium.launch({ channel: 'chrome', headless, args: CHROME_ARGS });
+  const browser = await chromium.launch({
+    channel: 'chrome',
+    headless,
+    args: [...CHROME_ARGS, ...extraArgs],
+  });
   return {
     url,
     browser,

@@ -99,7 +99,7 @@ Background workstreams (subagents): written content (§12.10), procedural audio 
 ## M8 — QA, performance, and documentation
 
 - [x] M8.1 Debug overlay, hotkeys, scene jumps (§17.6)
-- [ ] M8.2 Performance benchmark; budgets pass
+- [x] M8.2 Performance benchmark; budgets pass
 - [x] M8.3 README.md and qa/CHECKLIST.md
 - [ ] M8.4 Final full-spec audit and qa/FINAL_REPORT.md
 
